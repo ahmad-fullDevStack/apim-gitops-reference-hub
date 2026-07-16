@@ -40,7 +40,7 @@ jobs:
       - name: Upload coverage
         if: always()
         continue-on-error: true  # Actions storage quota may be exhausted on this account; don't fail the build for that.
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: coverage-xml
           path: coverage.xml
