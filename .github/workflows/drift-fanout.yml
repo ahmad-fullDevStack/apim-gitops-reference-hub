@@ -109,7 +109,7 @@ jobs:
       # open a PR in the spoke but never holds standing write access.
       - name: Mint spoke-repo token
         id: token
-        uses: actions/create-github-app-token@v1
+        uses: actions/create-github-app-token@v3
         with:
           app-id: ${{ vars.DRIFT_APP_ID }}
           private-key: ${{ secrets.DRIFT_APP_PRIVATE_KEY }}
