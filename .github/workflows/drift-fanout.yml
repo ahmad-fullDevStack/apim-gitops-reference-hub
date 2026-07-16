@@ -151,7 +151,7 @@ jobs:
           cp -r "$src" "$dest"
 
       - name: Open reconciliation PR in spoke repo
-        uses: peter-evans/create-pull-request@v6
+        uses: peter-evans/create-pull-request@v8
         with:
           token: ${{ steps.token.outputs.token }}
           path: spoke

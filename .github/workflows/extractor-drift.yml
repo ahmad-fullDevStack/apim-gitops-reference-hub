@@ -103,7 +103,7 @@ jobs:
 
       - name: Open auto-revert PR
         if: steps.diff.outputs.no_drift == 'false'
-        uses: peter-evans/create-pull-request@v6
+        uses: peter-evans/create-pull-request@v8
         with:
           commit-message: "chore(drift): restore APIM config to repo state"
           title: "chore(drift): restore APIM config to repo state"
