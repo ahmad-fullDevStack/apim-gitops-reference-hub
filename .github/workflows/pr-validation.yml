@@ -1,0 +1,53 @@
+name: pr-validation
+
+# Build-validation workflow registered as a required status check on `main`
+# by the repo_policy Terraform module. Runs the six CI checks from
+# .github/scripts/ against the diff of the PR.
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'apim-config/**'
+      - 'config/ci.json'
+      - '.github/scripts/**'
+
+permissions:
+  contents: read
+  pull-requests: read
+
+concurrency:
+  group: pr-validation-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  ci-checks:
+    name: APIM-config CI checks
+    runs-on: [self-hosted, linux, x64]
+    steps:
+      - name: Checkout PR head
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install
+        run: pip install -e .
+
+      - name: Compute changed files
+        id: changed
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch origin "${{ github.base_ref }}" --depth=1
+          git diff --name-only "origin/${{ github.base_ref }}...HEAD" > changed.txt
+          echo "=== Changed files ==="
+          cat changed.txt
+          echo "===================="
+
+      - name: Run all CI checks
+        run: python .github/scripts/run_all.py --changed-files changed.txt

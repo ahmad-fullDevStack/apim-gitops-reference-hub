@@ -1,0 +1,32 @@
+# Dev environment overrides. Use with:
+#   terraform plan  -var-file=dev.tfvars.example -out=tfplan
+#   terraform apply tfplan
+
+subscription_id   = "11111111-1111-1111-1111-111111111111"
+location          = "westeurope"
+environment       = "dev"
+name_prefix       = "apim-dev"
+owner             = "platform-dev@contoso.invalid"
+auto_delete_after = "2099-12-31"
+
+github_owner = "contoso"
+github_repo  = "apim-gitops-reference"
+
+# Repo policy is owned by prod only.
+manage_github_repo = false
+
+publisher_email = "platform-dev@contoso.invalid"
+publisher_name  = "APIM Dev Platform"
+
+# Dev: every domain on so teams can iterate, all gold to keep alerts noisy.
+domains = {
+  "pensions-core" = { display_name = "Pensions Core",     tier = "gold",   active = true }
+  "investments"   = { display_name = "Investments",       tier = "gold",   active = true }
+  "sandbox"       = { display_name = "Sandbox",           tier = "bronze", active = false }
+}
+
+alert_email_receivers = ["apim-platform-dev@contoso.invalid"]
+
+tags = {
+  cost_center = "DEV"
+}

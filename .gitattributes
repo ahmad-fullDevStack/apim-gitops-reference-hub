@@ -1,0 +1,6 @@
+# Force LF line endings for shell scripts so they execute correctly on
+# Linux runners regardless of the contributor's local autocrlf setting.
+*.sh         text eol=lf
+*.bash       text eol=lf
+# Cloud-init / config files consumed by Linux as-is.
+cloud-init*  text eol=lf

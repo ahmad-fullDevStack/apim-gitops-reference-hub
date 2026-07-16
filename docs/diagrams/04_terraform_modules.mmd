@@ -1,0 +1,118 @@
+---
+config:
+  flowchart:
+    htmlLabels: true
+    nodeSpacing: 45
+    rankSpacing: 60
+    padding: 12
+  themeVariables:
+    fontSize: 18px
+    fontFamily: Segoe UI, Arial, sans-serif
+---
+%% Terraform module dependency graph for envs/poc (same composition runs as
+%% dev/test/prod via per-env tfvars). Shows what each module provisions and
+%% how the env wires them together.
+
+flowchart TB
+    subgraph ENV["infra/envs/poc/  (canonical Terraform root)"]
+        direction TB
+        TFVARS["terraform.tfvars / dev|test|prod.tfvars<br/>subscription_id - environment<br/>owner - auto_delete_after<br/>domains map - alert_email_receivers"]
+        RG["azurerm_resource_group<br/>rg-{prefix}<br/>tags: project - env - owner<br/>auto-delete-after"]
+        TFVARS --> RG
+    end
+
+    subgraph M_OBS["module observability"]
+        direction TB
+        LAW["Log Analytics Workspace<br/>retention 30d"]
+        AI["Application Insights<br/>(workspace-based)"]
+        DIAG["APIM diagnostic setting<br/>allLogs + AllMetrics"]
+        AG["Action group<br/>(emails)"]
+        AL1["Metric alert<br/>Capacity gt 70%"]
+        AL2["Metric alert<br/>5xx Requests > 100/15m"]
+        LAW --> AI
+        LAW --> DIAG
+        AG --> AL1
+        AG --> AL2
+    end
+
+    subgraph M_APIM["module apim"]
+        direction TB
+        SVC["azurerm_api_management<br/>Premium_1 - SystemAssigned MI"]
+        LOG["APIM Logger<br/>app-insights-platform"]
+        POL["azurerm_resource_policy_assignment<br/>audit: base/ inheritance<br/>start Audit, promote to Deny"]
+        SVC --> LOG
+        SVC --> POL
+    end
+
+    subgraph M_WS["module workspace (for_each over var.domains)"]
+        direction LR
+        WS_PC["pensions-core"]
+        WS_INV["investments"]
+        WS_OTH["...6 more"]
+    end
+
+    subgraph M_GW["module workspace_gateway"]
+        direction TB
+        GW["azapi_resource gateway<br/>+ workspace binding<br/>(MI gap documented)"]
+    end
+
+    subgraph M_KV["module team_kv (x2)"]
+        direction LR
+        KVA["kv-{prefix}-team-a"]
+        KVB["kv-{prefix}-team-b"]
+        RBAC_KV["Key Vault Secrets User<br/>granted to APIM service MI"]
+    end
+
+    subgraph M_ID["module identity"]
+        direction TB
+        SP_PUB["sp-apiops-publisher<br/>+ federated cred per env<br/>(apim-dev|test|prod)"]
+        SP_EXT["sp-apiops-extractor<br/>+ federated cred ref:main"]
+        RBAC_PUB["APIM Service Contributor<br/>on APIM"]
+        RBAC_EXT["Reader on APIM"]
+        subgraph GROUPS["team_groups (for_each)"]
+            direction LR
+            GA["team-a contributor + reader"]
+            GB["team-b contributor + reader"]
+            GL["pensions-core-leads contributor + reader"]
+        end
+        FLOOR["Service Reader Floor<br/>API Management Service Reader Role<br/>at APIM scope (every group)"]
+        WSRBAC["Workspace Contributor + Reader<br/>at each workspace scope"]
+        SP_PUB --> RBAC_PUB
+        SP_EXT --> RBAC_EXT
+        GROUPS --> FLOOR
+        GROUPS --> WSRBAC
+    end
+
+    subgraph M_RP["module repo_policy (count = manage_github_repo)"]
+        direction TB
+        RS["github_repository_ruleset<br/>main-protection<br/>bypass_actors = []"]
+        CO["github_repository_file<br/>.github/CODEOWNERS<br/>rendered from codeowners.tpl"]
+        DB["dependabot_security_updates"]
+    end
+
+    %% Wiring
+    RG --> M_OBS
+    RG --> M_APIM
+    RG --> M_KV
+    M_OBS -- app_insights_id<br/>+ connection_string --> M_APIM
+    M_APIM -- apim_id --> M_OBS
+    M_APIM -- apim_id --> M_WS
+    M_APIM -- apim_id --> M_ID
+    M_APIM -- identity_principal_id --> M_KV
+    M_WS -- workspace_id --> M_GW
+    M_WS -- workspace_id --> M_ID
+    M_RP -- github team slugs --> CO
+    TFVARS -. drives all .-> M_APIM
+    TFVARS -. drives all .-> M_WS
+    TFVARS -. drives all .-> M_ID
+    TFVARS -. drives all .-> M_OBS
+
+    classDef azure fill:#0a3069,stroke:#0a3069,color:#fff;
+    classDef gh fill:#1f6feb,stroke:#1f6feb,color:#fff;
+    classDef sec fill:#fef9e7,stroke:#b7950b,color:#7d6608;
+    classDef gap stroke:#c0392b,stroke-width:2px,color:#c0392b;
+
+    class SVC,LAW,AI,DIAG,WS_PC,WS_INV,WS_OTH,KVA,KVB,RG azure
+    class RS,CO,DB gh
+    class POL,FLOOR,WSRBAC,RBAC_PUB,RBAC_EXT,SP_PUB,SP_EXT sec
+    class GW gap

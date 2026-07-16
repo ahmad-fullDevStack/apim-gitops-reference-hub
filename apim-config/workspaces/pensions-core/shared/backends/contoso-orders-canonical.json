@@ -1,0 +1,8 @@
+{
+  "name": "contoso-orders-canonical",
+  "properties": {
+    "description": "Canonical orders backend, shared across all consumer teams (replaces per-team duplicates).",
+    "url": "https://pensions-core-api.contoso.com/orders",
+    "protocol": "http"
+  }
+}

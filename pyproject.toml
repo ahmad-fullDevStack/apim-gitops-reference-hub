@@ -1,0 +1,73 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "apim-gitops-reference"
+version = "0.1.0"
+description = "Reference implementation of APIM + GitOps multi-team isolation pattern"
+readme = "README.md"
+requires-python = ">=3.11"
+license = { text = "MIT" }
+dependencies = [
+    "pyyaml>=6.0",
+    "lxml>=5.1",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0",
+    "pytest-cov>=5.0",
+    "ruff>=0.4",
+    "mypy>=1.10",
+    "types-PyYAML>=6.0",
+    "lxml-stubs>=0.5",
+]
+
+# The CI checks are plain scripts imported by pythonpath, not a wheel-installed
+# package. Tell setuptools there is nothing to discover so `pip install -e .`
+# succeeds without inventing a package layout.
+[tool.setuptools]
+packages = []
+
+[tool.pytest.ini_options]
+addopts = "-ra --strict-markers --strict-config"
+testpaths = ["tests/unit"]
+pythonpath = [".github/scripts"]
+filterwarnings = [
+    "error",
+]
+
+[tool.coverage.run]
+branch = true
+source = [".github/scripts", "scripts"]
+omit = [
+    "tests/*",
+    "*/__main__.py",
+    ".github/scripts/__init__.py",
+]
+
+[tool.coverage.report]
+show_missing = true
+skip_covered = false
+fail_under = 100
+exclude_also = [
+    "raise NotImplementedError",
+    "if __name__ == .__main__.:",
+    "if TYPE_CHECKING:",
+]
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP", "SIM", "RUF"]
+ignore = ["E501"]
+
+[tool.mypy]
+python_version = "3.11"
+strict = true
+files = [".github/scripts", "scripts"]
+mypy_path = [".github/scripts"]
+explicit_package_bases = true

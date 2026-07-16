@@ -1,0 +1,88 @@
+---
+config:
+  flowchart:
+    htmlLabels: true
+    nodeSpacing: 40
+    rankSpacing: 55
+    padding: 10
+  themeVariables:
+    fontSize: 17px
+    fontFamily: Segoe UI, Arial, sans-serif
+---
+%% The 9 pre-merge CI checks + 1 report-only inventory scan.
+%% Each check is a Python module under .github/scripts/, sharing _common.py,
+%% orchestrated by run_all.py, invoked from pr-validation.yml.
+%% Source: docs/reference_architecture.md §4.5 +
+%%         reference architecture "Workspace Consolidation, Governance & Dedup Strategy".
+
+flowchart TB
+    subgraph IN["Inputs"]
+        CHG["changed.txt<br/>git diff --name-only<br/>origin/main...HEAD"]
+        CFG["config/ci.json<br/>workspace_root - teams - domains<br/>valid_tiers - gateway_capacity<br/>allowlists"]
+    end
+
+    subgraph COM["Shared library"]
+        COMP["_common.py<br/>CIConfig - TeamConfig - DomainConfig<br/>GatewayCapacity - Violation<br/>load_config - read_changed_files<br/>filter_existing - extract_kv_hostnames"]
+    end
+
+    subgraph ORCH["Orchestrator"]
+        RUN["run_all.py<br/>iterates _CHECKS tuple<br/>emit on stderr<br/>exits non-zero on any violation"]
+    end
+
+    subgraph PRE["Pre-merge gates (block merge on failure)"]
+        direction TB
+        subgraph ISO["Team isolation - source: §4.5"]
+            C1["path_scope.py<br/>fails if a team writes outside teams/its-folder/<br/>also blocks platform-only paths"]
+            C2["base_inheritance.py<br/>every policy.xml must base/ in<br/>inbound/backend/outbound/on-error"]
+            C3["kv_uri_allowlist.py<br/>named-value KV URI host must be in<br/>team.allowed_key_vaults"]
+            C4["backend_allowlist.py<br/>backend URL host must be in<br/>team.allowed_backend_hosts"]
+            C5["naming_convention.py<br/>file stem must start with team prefix<br/>across apis/backends/named-values/products/version-sets"]
+            C6["secret_scan.py<br/>literal connection strings - keys - PATs<br/>in any committed file"]
+        end
+        subgraph GOV["Governance - source: PDF"]
+            C7["tier_check.py<br/>workspace.json tier in valid_tiers<br/>bronze cannot have active=true"]
+            C8["freeze_workspace.py<br/>new workspace folder must be<br/>declared in config.domains[]"]
+            C9["versioning.py<br/>info.version required (non-empty string)<br/>deprecated=true requires<br/>x-deprecation-date (ISO 8601)"]
+        end
+    end
+
+    subgraph REP["Report-only (never blocks)"]
+        R1["inventory.py<br/>duplicate backend URLs across workspaces<br/>near-duplicate policies (SHA1 of normalised text)<br/>output: JSON to stdout"]
+    end
+
+    subgraph OUT["Outputs"]
+        FAIL["exit != 0<br/>required check fails<br/>merge button disabled"]
+        PASS["exit 0<br/>merge unblocked (still needs CODEOWNERS approvals)"]
+        ART["inventory.json<br/>uploaded as workflow artifact<br/>by extractor-drift.yml"]
+    end
+
+    CHG --> RUN
+    CFG --> RUN
+    COMP -. imported by .-> C1
+    COMP -. imported by .-> C2
+    COMP -. imported by .-> C3
+    COMP -. imported by .-> C4
+    COMP -. imported by .-> C5
+    COMP -. imported by .-> C6
+    COMP -. imported by .-> C7
+    COMP -. imported by .-> C8
+    COMP -. imported by .-> C9
+    COMP -. imported by .-> R1
+    RUN --> C1 --> C2 --> C3 --> C4 --> C5 --> C6 --> C7 --> C8 --> C9
+    C9 --> FAIL
+    C9 --> PASS
+    R1 --> ART
+    CHG -. unused .-> R1
+    CFG -. scans full tree .-> R1
+
+    classDef shared fill:#0a3069,stroke:#0a3069,color:#fff;
+    classDef gate fill:#fef9e7,stroke:#b7950b,color:#7d6608;
+    classDef gov fill:#e7f5ff,stroke:#1971c2,color:#0b4884;
+    classDef report fill:#dff5e1,stroke:#1f8a3a,color:#0a3d1f;
+    classDef io fill:#f1f3f5,stroke:#495057,color:#212529;
+
+    class COMP,RUN shared
+    class C1,C2,C3,C4,C5,C6 gate
+    class C7,C8,C9 gov
+    class R1,ART report
+    class CHG,CFG,FAIL,PASS io

@@ -1,0 +1,14 @@
+{
+  "properties": {
+    "displayName": "Contoso Pensions Orders (canonical) v2",
+    "description": "v2 of the canonical orders API. Header-versioned (Api-Version) within the contoso-orders version set; consumers stay on v1 until the deprecation window expires.",
+    "path": "orders",
+    "protocols": [
+      "https"
+    ],
+    "subscriptionRequired": true,
+    "type": "http",
+    "apiVersion": "v2",
+    "apiVersionSetId": "/workspaces/pensions-core/apiVersionSets/contoso-orders"
+  }
+}

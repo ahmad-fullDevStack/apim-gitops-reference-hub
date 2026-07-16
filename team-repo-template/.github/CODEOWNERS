@@ -1,0 +1,11 @@
+# CODEOWNERS for the team-a spoke repo.
+#
+# The team owns its entire apim-config slice. The platform team owns the CI
+# caller workflows so the guardrail wiring (the pinned calls into the hub's
+# reusable gate) cannot be quietly removed or re-pointed.
+
+# Team owns everything by default (their API slice)
+*                       @team-a-reviewers
+
+# Platform owns the workflow wiring that binds this repo to the hub's gate
+/.github/workflows/     @platform-team

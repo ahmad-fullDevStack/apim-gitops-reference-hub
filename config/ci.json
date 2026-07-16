@@ -1,0 +1,70 @@
+{
+  "workspace_root": "apim-config/workspaces",
+  "platform_paths": [
+    "apim-config/service",
+    "apim-config/workspaces/pensions-core/workspace.json",
+    "apim-config/workspaces/pensions-core/policy.xml",
+    "apim-config/workspaces/investments/workspace.json",
+    "apim-config/workspaces/investments/policy.xml",
+    "apim-config/workspaces/customer-identity/workspace.json",
+    "apim-config/workspaces/customer-identity/policy.xml",
+    "apim-config/workspaces/integrations/workspace.json",
+    "apim-config/workspaces/integrations/policy.xml",
+    "apim-config/workspaces/data-reporting/workspace.json",
+    "apim-config/workspaces/data-reporting/policy.xml",
+    "apim-config/workspaces/shared-services/workspace.json",
+    "apim-config/workspaces/shared-services/policy.xml",
+    "apim-config/workspaces/external-partners/workspace.json",
+    "apim-config/workspaces/external-partners/policy.xml",
+    "apim-config/workspaces/sandbox/workspace.json",
+    "apim-config/workspaces/sandbox/policy.xml"
+  ],
+  "domains": [
+    {"name": "pensions-core",     "tier": "gold",   "leads_team": "pensions-core-leads",     "active": true},
+    {"name": "investments",       "tier": "gold",   "leads_team": "investments-leads",       "active": false},
+    {"name": "customer-identity", "tier": "gold",   "leads_team": "customer-identity-leads", "active": false},
+    {"name": "integrations",      "tier": "silver", "leads_team": "integrations-leads",      "active": false},
+    {"name": "data-reporting",    "tier": "silver", "leads_team": "data-reporting-leads",    "active": false},
+    {"name": "shared-services",   "tier": "silver", "leads_team": "shared-services-leads",   "active": false},
+    {"name": "external-partners", "tier": "silver", "leads_team": "external-partners-leads", "active": false},
+    {"name": "sandbox",           "tier": "bronze", "leads_team": "sandbox-leads",           "active": false}
+  ],
+  "valid_tiers": ["gold", "silver", "bronze"],
+  "gateway_capacity": {
+    "workspaces_per_instance": 100,
+    "workspaces_per_gateway": 30,
+    "target_active_workspaces": 10
+  },
+  "teams": [
+    {
+      "name": "team-a",
+      "folder": "apim-config/workspaces/pensions-core/teams/team-a",
+      "prefix": "teama",
+      "allowed_key_vaults": ["kv-pensions-core-team-a"],
+      "allowed_backend_hosts": [
+        "stub-orders-api.azurewebsites.net",
+        "orders.contoso.com",
+        "payments.contoso.com"
+      ]
+    },
+    {
+      "name": "team-b",
+      "folder": "apim-config/workspaces/pensions-core/teams/team-b",
+      "prefix": "teamb",
+      "allowed_key_vaults": ["kv-pensions-core-team-b"],
+      "allowed_backend_hosts": [
+        "claims.contoso.com",
+        "notifications.contoso.com"
+      ]
+    },
+    {
+      "name": "pensions-core-shared",
+      "folder": "apim-config/workspaces/pensions-core/shared",
+      "prefix": "contoso",
+      "allowed_key_vaults": ["kv-pensions-core-shared"],
+      "allowed_backend_hosts": [
+        "pensions-core-api.contoso.com"
+      ]
+    }
+  ]
+}

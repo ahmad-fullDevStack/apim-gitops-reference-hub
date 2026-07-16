@@ -1,0 +1,11 @@
+{
+  "name": "contoso-pensions-internal",
+  "properties": {
+    "displayName": "Pensions — Internal Consumers",
+    "description": "Bundles the canonical contoso-orders API for internal Contoso consumer teams. Per-consumer rate limits + IP allowlist expressed at this product scope (reference architecture: Consumer Separation via Products & Subscriptions).",
+    "subscriptionRequired": true,
+    "approvalRequired": false,
+    "state": "published",
+    "apis": ["contoso-orders-canonical-v1", "contoso-orders-canonical-v2"]
+  }
+}

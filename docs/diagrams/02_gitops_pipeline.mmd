@@ -1,0 +1,127 @@
+---
+config:
+  flowchart:
+    htmlLabels: true
+    nodeSpacing: 50
+    rankSpacing: 65
+    padding: 12
+  themeVariables:
+    fontSize: 18px
+    fontFamily: Segoe UI, Arial, sans-serif
+---
+%% End-to-end GitOps pipeline: PR -> CI -> CODEOWNERS -> merge ->
+%% Dev -> Test -> Prod publisher -> APIM -> Drift reconciliation.
+%% Pair with: 03_ci_checks.mmd, 04_terraform_modules.mmd
+
+flowchart LR
+    %% ---------- Author side ----------
+    subgraph AUTH["1. Author"]
+        direction TB
+        DEV["Team A engineer<br/>APIM Reader only"]
+        BR["feature branch"]
+        DEV --> BR
+    end
+
+    %% ---------- Pre-merge ----------
+    subgraph PR["2. Pull request to main"]
+        direction TB
+        PROPEN["gh pr create"]
+        PRV["pr-validation.yml<br/>(self-hosted runner)"]
+        PROPEN --> PRV
+        subgraph CHK["9 pre-merge checks + 1 report-only"]
+            direction LR
+            CK1["path-scope"]
+            CK2["base-inheritance"]
+            CK3["kv-uri-allowlist"]
+            CK4["backend-allowlist"]
+            CK5["naming-convention"]
+            CK6["secret-scan"]
+            CK7["tier-check"]
+            CK8["freeze-workspace"]
+            CK9["versioning"]
+            CKR["inventory (report)"]
+        end
+        PRV --> CHK
+    end
+
+    %% ---------- Review ----------
+    subgraph REV["3. Review & merge"]
+        direction TB
+        CO["CODEOWNERS<br/>route by changed path"]
+        DL["Domain leads<br/>team leads"]
+        RULESET["Repository ruleset<br/>- 2 approvals<br/>- code-owner review<br/>- last-push approval<br/>- dismiss stale<br/>- bypass = none"]
+        MERGE["main"]
+        CO --> DL --> RULESET --> MERGE
+    end
+
+    %% ---------- Pipeline ----------
+    subgraph CD["4. Publisher (push to main)"]
+        direction TB
+        WF["publisher.yml<br/>workflow dispatch / push"]
+
+        subgraph DEVE["Dev env"]
+            ENVD["GH Env: apim-dev"]
+            OIDC_D["OIDC subject<br/>env:apim-dev"]
+            APIM_D["APIM Dev"]
+            ENVD --> OIDC_D --> APIM_D
+        end
+        subgraph TSTE["Test env"]
+            ENVT["GH Env: apim-test<br/>1 approver"]
+            OIDC_T["OIDC subject<br/>env:apim-test"]
+            APIM_T["APIM Test"]
+            ENVT --> OIDC_T --> APIM_T
+        end
+        subgraph PRDE["Prod env"]
+            ENVP["GH Env: apim-prod<br/>2 approvers"]
+            OIDC_P["OIDC subject<br/>env:apim-prod"]
+            APIM_P["APIM Prod"]
+            ENVP --> OIDC_P --> APIM_P
+        end
+
+        WF --> DEVE --> TSTE --> PRDE
+    end
+
+    %% ---------- APIM ----------
+    subgraph APIM["5. Azure API Management (Premium)"]
+        direction TB
+        SVC["Service policy<br/>CORS - HSTS - CSP - JWT<br/>App Insights logger"]
+        WSALL["~8 domain workspaces<br/>gold (active) - silver/bronze (frozen)"]
+        AP["Azure Policy<br/>audit: base/ inheritance"]
+        AI["App Insights<br/>(traces)"]
+        ALERT["Metric alerts<br/>Capacity gt 70% - 5xx spike"]
+        SVC --> WSALL
+        AP -.audits.-> WSALL
+        WSALL -.metrics.-> AI
+        AI -.feeds.-> ALERT
+    end
+
+    %% ---------- Drift ----------
+    subgraph DRIFT["6. Drift reconciliation (hourly)"]
+        direction TB
+        EXT["extractor-drift.yml<br/>cron @ :17"]
+        DIFF["diff vs apim-config/"]
+        INV["inventory.py<br/>duplicate detection"]
+        ART["artifact:<br/>drift.txt + inventory.json"]
+        REVPR["chore(drift): auto-revert PR"]
+        EXT --> DIFF
+        EXT --> INV --> ART
+        DIFF -- drift found --> REVPR
+        REVPR -.-> PROPEN
+    end
+
+    %% ---------- Wires ----------
+    BR --> PROPEN
+    CHK -- all pass --> CO
+    MERGE --> WF
+    APIM_P -. extractor reads .-> EXT
+
+    classDef gate fill:#fef9e7,stroke:#b7950b,color:#7d6608;
+    classDef pipeline fill:#1f6feb,stroke:#1f6feb,color:#fff;
+    classDef azure fill:#0a3069,stroke:#0a3069,color:#fff;
+    classDef report fill:#dff5e1,stroke:#1f8a3a,color:#0a3d1f;
+    classDef block stroke:#c0392b,stroke-width:2px,color:#c0392b;
+
+    class RULESET,CO,ENVD,ENVT,ENVP gate
+    class WF,EXT pipeline
+    class SVC,WSALL,AI,AP,ALERT,APIM_D,APIM_T,APIM_P azure
+    class CKR,INV,ART report

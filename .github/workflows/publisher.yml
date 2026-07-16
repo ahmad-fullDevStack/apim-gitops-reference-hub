@@ -1,0 +1,221 @@
+name: publisher
+
+# APIOps publisher with Dev -> Test -> Prod promotion.
+#
+# Source: PDF §"Environment Separation Strategy" - every change must be
+# observed in Dev, then Test, before reaching Prod, with a human approval
+# gate at the Prod GitHub Environment.
+#
+# Guardrail gate: the `validate` job below is the AUTHORITATIVE, un-bypassable
+# enforcement point. It runs the .github/scripts/ CI checks against the central
+# config/ci.json before any publish job. In the hub-and-spoke (multi-repo) model
+# team-side pr-validation is advisory only; this gate is what actually protects
+# APIM, because a team cannot edit or skip it.
+#
+# Authentication: OIDC federation per environment. The publisher SP for
+# each env has its own federated credential subject
+# (`...:environment:apim-dev`, `apim-test`, `apim-prod`), provisioned by
+# infra/modules/identity.
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'apim-config/**'
+  workflow_dispatch:
+
+permissions:
+  id-token: write
+  contents: read
+
+concurrency:
+  group: apim-publisher
+  cancel-in-progress: false
+
+jobs:
+  # Authoritative guardrail gate. The CI checks in .github/scripts/ run here —
+  # inside the hub-owned, OIDC-privileged publish pipeline that writes to APIM —
+  # using the CENTRAL config/ci.json. This is the real, un-bypassable enforcement
+  # point in the hub-and-spoke model: team-side pr-validation is advisory only,
+  # so a weakened or skipped team-repo check cannot reach APIM, because this gate
+  # re-validates the merged result before a single APIOps publish job runs.
+  validate:
+    name: Guardrail gate (authoritative)
+    runs-on: [self-hosted, linux, x64]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install
+        run: pip install -e .
+
+      - name: Compute changed files (push range)
+        id: changed
+        shell: bash
+        run: |
+          set -euo pipefail
+          BEFORE="${{ github.event.before }}"
+          AFTER="${{ github.sha }}"
+          ZERO="0000000000000000000000000000000000000000"
+          if [ -n "$BEFORE" ] && [ "$BEFORE" != "$ZERO" ] && git cat-file -e "${BEFORE}^{commit}" 2>/dev/null; then
+            git diff --name-only "$BEFORE" "$AFTER" > changed.txt
+          else
+            # First push / workflow_dispatch (no `before` ref): fall back to the
+            # last commit's diff rather than the whole tree, so the diff-based
+            # path-scope check stays meaningful.
+            git diff --name-only HEAD~1 HEAD > changed.txt
+          fi
+          echo "=== Changed files (publish gate) ==="
+          cat changed.txt
+          echo "==================================="
+
+      - name: Run all CI checks (authoritative)
+        run: python .github/scripts/run_all.py --changed-files changed.txt
+
+  publish-dev:
+    name: Publish to APIM (dev)
+    needs: validate
+    runs-on: [self-hosted, linux, x64]
+    environment:
+      name: apim-dev
+      url: https://portal.azure.com
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Azure login (OIDC, dev)
+        uses: azure/login@v2
+        with:
+          client-id: ${{ vars.AZURE_PUBLISHER_CLIENT_ID_DEV }}
+          tenant-id: ${{ vars.AZURE_TENANT_ID }}
+          subscription-id: ${{ vars.AZURE_SUBSCRIPTION_ID_DEV }}
+
+      - name: Build APIOps artifacts (dev)
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m pip install --quiet pyyaml lxml
+          python scripts/validate_config_tree.py apim-config/
+          # Collapse the governance layout (teams/ + shared/) into the
+          # APIOps-native artifact layout the publisher consumes.
+          python scripts/apiops_adapter.py to-native \
+            --src apim-config/ --dest build/apiops/
+
+      - name: Run APIOps publisher (dev)
+        shell: bash
+        env:
+          # azure/login@v2 above exported the OIDC env that APIOps' Azure.Identity
+          # DefaultAzureCredential consumes (AZURE_CLIENT_ID / AZURE_TENANT_ID /
+          # AZURE_FEDERATED_TOKEN_FILE). No secret is handled here.
+          AZURE_SUBSCRIPTION_ID: ${{ vars.AZURE_SUBSCRIPTION_ID_DEV }}
+          AZURE_RESOURCE_GROUP_NAME: ${{ vars.APIM_RG_DEV }}
+          API_MANAGEMENT_SERVICE_NAME: ${{ vars.APIM_NAME_DEV }}
+          API_MANAGEMENT_SERVICE_OUTPUT_FOLDER_PATH: build/apiops
+          APIOPS_VERSION: ${{ vars.APIOPS_VERSION || 'v7.0.3' }}
+        run: |
+          set -euo pipefail
+          curl -sSL -o publisher.zip \
+            "https://github.com/Azure/apiops/releases/download/${APIOPS_VERSION}/publisher-linux-x64.zip"
+          unzip -o -q publisher.zip -d apiops-bin
+          chmod +x apiops-bin/publisher
+          ./apiops-bin/publisher
+
+  publish-test:
+    name: Publish to APIM (test)
+    needs: publish-dev
+    runs-on: [self-hosted, linux, x64]
+    environment:
+      name: apim-test
+      url: https://portal.azure.com
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Azure login (OIDC, test)
+        uses: azure/login@v2
+        with:
+          client-id: ${{ vars.AZURE_PUBLISHER_CLIENT_ID_TEST }}
+          tenant-id: ${{ vars.AZURE_TENANT_ID }}
+          subscription-id: ${{ vars.AZURE_SUBSCRIPTION_ID_TEST }}
+
+      - name: Build APIOps artifacts (test)
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m pip install --quiet pyyaml lxml
+          python scripts/validate_config_tree.py apim-config/
+          # Collapse the governance layout into the APIOps-native layout.
+          python scripts/apiops_adapter.py to-native \
+            --src apim-config/ --dest build/apiops/
+
+      - name: Run APIOps publisher (test)
+        shell: bash
+        env:
+          AZURE_SUBSCRIPTION_ID: ${{ vars.AZURE_SUBSCRIPTION_ID_TEST }}
+          AZURE_RESOURCE_GROUP_NAME: ${{ vars.APIM_RG_TEST }}
+          API_MANAGEMENT_SERVICE_NAME: ${{ vars.APIM_NAME_TEST }}
+          API_MANAGEMENT_SERVICE_OUTPUT_FOLDER_PATH: build/apiops
+          APIOPS_VERSION: ${{ vars.APIOPS_VERSION || 'v7.0.3' }}
+        run: |
+          set -euo pipefail
+          curl -sSL -o publisher.zip \
+            "https://github.com/Azure/apiops/releases/download/${APIOPS_VERSION}/publisher-linux-x64.zip"
+          unzip -o -q publisher.zip -d apiops-bin
+          chmod +x apiops-bin/publisher
+          ./apiops-bin/publisher
+
+  publish-prod:
+    name: Publish to APIM (prod)
+    needs: publish-test
+    runs-on: [self-hosted, linux, x64]
+    environment:
+      # Manual reviewer approval is enforced by the apim-prod Environment
+      # config in GitHub; nothing in this workflow forces it. Make sure the
+      # Environment has required reviewers configured before going live.
+      name: apim-prod
+      url: https://portal.azure.com
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Azure login (OIDC, prod)
+        uses: azure/login@v2
+        with:
+          client-id: ${{ vars.AZURE_PUBLISHER_CLIENT_ID }}
+          tenant-id: ${{ vars.AZURE_TENANT_ID }}
+          subscription-id: ${{ vars.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Build APIOps artifacts (prod)
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m pip install --quiet pyyaml lxml
+          python scripts/validate_config_tree.py apim-config/
+          python scripts/apiops_adapter.py to-native \
+            --src apim-config/ --dest build/apiops/
+
+      - name: Run APIOps publisher (prod)
+        shell: bash
+        env:
+          AZURE_SUBSCRIPTION_ID: ${{ vars.AZURE_SUBSCRIPTION_ID }}
+          AZURE_RESOURCE_GROUP_NAME: ${{ vars.APIM_RG }}
+          API_MANAGEMENT_SERVICE_NAME: ${{ vars.APIM_NAME }}
+          API_MANAGEMENT_SERVICE_OUTPUT_FOLDER_PATH: build/apiops
+          APIOPS_VERSION: ${{ vars.APIOPS_VERSION || 'v7.0.3' }}
+        run: |
+          set -euo pipefail
+          curl -sSL -o publisher.zip \
+            "https://github.com/Azure/apiops/releases/download/${APIOPS_VERSION}/publisher-linux-x64.zip"
+          unzip -o -q publisher.zip -d apiops-bin
+          chmod +x apiops-bin/publisher
+          ./apiops-bin/publisher

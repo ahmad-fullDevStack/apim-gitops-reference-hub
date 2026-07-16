@@ -1,0 +1,210 @@
+name: team-publish
+
+# Authoritative, hub-owned team publish: guardrail gate + scoped APIOps publish,
+# run atomically in a single job. Spoke (team) repos call this via `workflow_call`
+# and provide inputs/secrets, but they CANNOT edit what runs between the gate and
+# the publish — so a team can never skip the guardrails. Two isolation layers:
+#
+#   1. The gate runs the hub's .github/scripts/ checks against the CENTRAL
+#      config/ci.json (checked out from the hub, not the caller), so a team
+#      cannot weaken the rules or widen their own allowlists.
+#   2. The publish is scoped to the calling team (`apiops_adapter.py --team`) and
+#      uses a WORKSPACE-scoped OIDC credential, so the blast radius is limited to
+#      that team's slice of the shared workspace even if something slips through.
+#
+# This is the "hub publish gate = authoritative" decision, delivered as a reusable
+# workflow that executes in the team repo's context with the team's own
+# workspace-scoped credential.
+
+on:
+  workflow_call:
+    inputs:
+      team:
+        description: Team folder name to publish (e.g. team-a)
+        type: string
+        required: true
+      environment:
+        description: GitHub environment / APIM target
+        type: string
+        default: apim-prod
+      hub_repository:
+        description: owner/name of the hub repo that owns the checks + ci.json
+        type: string
+        default: your-org/apim-gitops-reference
+      hub_ref:
+        description: Git ref of the hub repo to source checks/config from
+        type: string
+        default: main
+      apiops_version:
+        type: string
+        default: v7.0.3
+      runner_labels:
+        description: >-
+          JSON array of runner labels to run on. Defaults to the self-hosted
+          pool used in the reference deployment; a caller can pass e.g.
+          '["ubuntu-latest"]' to run on a GitHub-hosted runner (the publish
+          only needs the ARM management plane, which is public).
+        type: string
+        default: '["self-hosted", "linux", "x64"]'
+      prune:
+        description: >-
+          Opt-in delete pass. After the additive publish, DELETE live resources
+          that carry this team's name prefix but are no longer present in the
+          repo. Off by default because deletes are destructive; a team enables
+          it deliberately (per push or dispatch). Prefix-scoped, so it can only
+          ever remove this team's own resources.
+        type: boolean
+        default: false
+    secrets:
+      AZURE_CLIENT_ID:
+        description: Client ID of the team's WORKSPACE-scoped publisher SP
+        required: true
+      AZURE_TENANT_ID:
+        required: true
+      AZURE_SUBSCRIPTION_ID:
+        required: true
+      hub_token:
+        description: >-
+          Token that can read the (possibly private) hub repo to fetch the
+          shared checks + central ci.json + adapter. Fine-grained PAT (read-only
+          Contents on the hub) or GitHub App token. Optional: falls back to the
+          job's github.token (works only when the hub is public or same repo).
+        required: false
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  publish:
+    name: Gate + scoped publish (${{ inputs.team }})
+    runs-on: ${{ fromJSON(inputs.runner_labels) }}
+    environment:
+      name: ${{ inputs.environment }}
+      url: https://portal.azure.com
+    env:
+      APIOPS_VERSION: ${{ inputs.apiops_version }}
+    steps:
+      - name: Checkout caller (team) repo
+        uses: actions/checkout@v4
+        with:
+          path: caller
+
+      - name: Checkout hub (checks + central ci.json + adapter)
+        uses: actions/checkout@v4
+        with:
+          repository: ${{ inputs.hub_repository }}
+          ref: ${{ inputs.hub_ref }}
+          path: hub
+          token: ${{ secrets.hub_token || github.token }}
+
+      # Hosted runners get Python here. Self-hosted runners are expected to have a
+      # suitable Python (3.11+) pre-provisioned on PATH; setup-python does not
+      # support every self-hosted platform (e.g. win-arm64), so it is best-effort.
+      - name: Set up Python (best-effort)
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+        continue-on-error: true
+
+      - name: Verify Python is available
+        shell: bash
+        run: python --version
+
+      - name: Install hub tooling
+        working-directory: hub
+        run: python -m pip install -e .
+
+      # --- Authoritative gate (un-skippable: same job, before publish) --------
+      - name: Guardrail gate (authoritative)
+        shell: bash
+        run: |
+          set -euo pipefail
+          # A spoke repo holds exactly one team's slice, so every tracked
+          # apim-config file belongs to the same team; feed them all to the gate.
+          ( cd caller && git ls-files 'apim-config/**' ) > changed.txt
+          echo "=== Files under authoritative gate ==="
+          cat changed.txt
+          echo "======================================"
+          python hub/.github/scripts/run_all.py \
+            --changed-files changed.txt \
+            --repo-root caller \
+            --config hub/config/ci.json
+
+      # --- Scoped build: only this team's artifacts (never other teams) -------
+      - name: Build scoped APIOps artifacts
+        shell: bash
+        run: |
+          set -euo pipefail
+          python hub/scripts/apiops_adapter.py to-native \
+            --src caller/apim-config/ --dest build/apiops/ --team "${{ inputs.team }}"
+
+      - name: Azure login (OIDC, workspace-scoped)
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Run APIOps publisher (scoped, additive upsert)
+        shell: bash
+        env:
+          AZURE_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+          AZURE_RESOURCE_GROUP_NAME: ${{ vars.APIM_RG }}
+          API_MANAGEMENT_SERVICE_NAME: ${{ vars.APIM_NAME }}
+          API_MANAGEMENT_SERVICE_OUTPUT_FOLDER_PATH: build/apiops
+        run: |
+          set -euo pipefail
+          curl -sSL -o publisher.zip \
+            "https://github.com/Azure/apiops/releases/download/${APIOPS_VERSION}/publisher-linux-x64.zip"
+          unzip -o -q publisher.zip -d apiops-bin
+          chmod +x apiops-bin/publisher
+          ./apiops-bin/publisher
+
+      # --- Opt-in prune: propagate repo deletions to APIM (scoped) -----------
+      # Additive upsert never deletes, so removing an API from the repo leaves
+      # it live. When the caller sets `prune: true`, delete live resources that
+      # carry THIS team's prefix but are absent from the scoped build. The
+      # prefix rule (enforced in prune_plan.py) means a team's prune can only
+      # ever remove its own resources from the shared workspace.
+      - name: Prune resources removed from the repo (opt-in)
+        if: ${{ inputs.prune }}
+        shell: bash
+        env:
+          AZURE_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+          AZURE_RESOURCE_GROUP_NAME: ${{ vars.APIM_RG }}
+          API_MANAGEMENT_SERVICE_NAME: ${{ vars.APIM_NAME }}
+          APIM_API_VERSION: ${{ vars.APIM_API_VERSION || '2024-05-01' }}
+        run: |
+          set -euo pipefail
+          # Workspace + prefix come from the hub-owned central config.
+          IFS=$'\t' read -r WS PREFIX < <(python hub/scripts/prune_plan.py meta \
+            --config hub/config/ci.json --team "${{ inputs.team }}")
+          echo "Prune scope: workspace=${WS} prefix=${PREFIX}-*"
+          BASE="/subscriptions/${AZURE_SUBSCRIPTION_ID}/resourceGroups/${AZURE_RESOURCE_GROUP_NAME}/providers/Microsoft.ApiManagement/service/${API_MANAGEMENT_SERVICE_NAME}/workspaces/${WS}"
+
+          prune_kind () {
+            local kind="$1" arm="$2"
+            az rest --method get \
+              --url "https://management.azure.com${BASE}/${arm}?api-version=${APIM_API_VERSION}" \
+              --query "value[].name" -o tsv > live.txt || : > live.txt
+            local to_delete
+            to_delete="$(python hub/scripts/prune_plan.py plan \
+              --config hub/config/ci.json --team "${{ inputs.team }}" \
+              --build-root build/apiops --kind "${kind}" --live live.txt)"
+            if [ -z "${to_delete}" ]; then
+              echo "  [${kind}] nothing to prune"
+              return 0
+            fi
+            while IFS= read -r name; do
+              [ -z "${name}" ] && continue
+              echo "  [${kind}] deleting ${name}"
+              az rest --method delete \
+                --url "https://management.azure.com${BASE}/${arm}/${name}?api-version=${APIM_API_VERSION}"
+            done <<< "${to_delete}"
+          }
+
+          # APIs first (they reference backends / named values), then the rest.
+          prune_kind apis apis
+          prune_kind backends backends
+          prune_kind namedValues namedValues

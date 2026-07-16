@@ -1,0 +1,16 @@
+<!-- contoso-orders-canonical / v2 API-level policy. Must <base /> back into the workspace policy. -->
+<policies>
+    <inbound>
+        <base />
+        <set-backend-service backend-id="contoso-orders-canonical" />
+    </inbound>
+    <backend>
+        <base />
+    </backend>
+    <outbound>
+        <base />
+    </outbound>
+    <on-error>
+        <base />
+    </on-error>
+</policies>

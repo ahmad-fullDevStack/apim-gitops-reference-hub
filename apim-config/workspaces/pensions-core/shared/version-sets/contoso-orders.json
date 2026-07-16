@@ -1,0 +1,9 @@
+{
+  "name": "contoso-orders",
+  "properties": {
+    "displayName": "Contoso Orders (canonical)",
+    "description": "Header-based version set grouping all major versions of the canonical contoso-orders API. See the reference architecture: API Deduplication Strategy → Versioning Breaking Changes.",
+    "versioningScheme": "Header",
+    "versionHeaderName": "Api-Version"
+  }
+}

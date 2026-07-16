@@ -1,0 +1,47 @@
+# Prod environment overrides.
+#
+# Cost callout (global guardrails): provisioning the prod env adds the full
+# Premium APIM bill (~€2500/month base + per-gateway units), Application
+# Insights, Log Analytics, and metric alerts. Confirm subscription before
+# apply.
+
+subscription_id   = "33333333-3333-3333-3333-333333333333"
+location          = "westeurope"
+environment       = "prod"
+name_prefix       = "apim-prod"
+owner             = "platform-prod@contoso.invalid"
+# Prod is not auto-deleted; pin far in the future so the tag is still present
+# for compliance reporting.
+auto_delete_after = "2099-12-31"
+
+github_owner = "contoso"
+github_repo  = "apim-gitops-reference"
+
+# Prod is the canonical owner of the GitHub branch protection / CODEOWNERS.
+manage_github_repo = true
+
+publisher_email = "platform-prod@contoso.invalid"
+publisher_name  = "APIM Prod Platform"
+
+domains = {
+  "pensions-core"      = { display_name = "Pensions Core",     tier = "gold",   active = true }
+  "investments"        = { display_name = "Investments",       tier = "gold",   active = true }
+  "customer-identity"  = { display_name = "Customer Identity", tier = "gold",   active = true }
+  "integrations"       = { display_name = "Integrations",      tier = "silver", active = true }
+  "data-reporting"     = { display_name = "Data & Reporting",  tier = "silver", active = true }
+  "shared-services"    = { display_name = "Shared Services",   tier = "silver", active = true }
+  "external-partners"  = { display_name = "External Partners", tier = "silver", active = true }
+  # Bronze stays inactive in prod: PDF treats bronze workspaces as
+  # non-SLA-bearing experiments and the freeze_workspace CI check forbids
+  # bronze + active=true.
+  "sandbox"            = { display_name = "Sandbox",           tier = "bronze", active = false }
+}
+
+alert_email_receivers = [
+  "apim-platform-oncall@contoso.invalid",
+  "pensions-core-oncall@contoso.invalid",
+]
+
+tags = {
+  cost_center = "PROD"
+}

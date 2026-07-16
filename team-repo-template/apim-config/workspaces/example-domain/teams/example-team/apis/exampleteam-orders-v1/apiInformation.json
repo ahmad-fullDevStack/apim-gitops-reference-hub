@@ -1,0 +1,12 @@
+{
+  "properties": {
+    "displayName": "Example Team Orders v1",
+    "description": "PLACEHOLDER sample API. Shows the required folder layout for a team's API. Replace with your real slice copied from the hub. Backed via the policy's set-backend-service (no serviceUrl here).",
+    "path": "exampleteam/orders",
+    "protocols": [
+      "https"
+    ],
+    "subscriptionRequired": true,
+    "type": "http"
+  }
+}

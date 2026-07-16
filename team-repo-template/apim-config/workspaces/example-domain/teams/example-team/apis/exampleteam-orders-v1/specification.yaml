@@ -1,0 +1,52 @@
+openapi: 3.0.3
+info:
+  title: Example Team Orders v1
+  version: 1.0.0
+  description: |
+    PLACEHOLDER sample API for the spoke template. Demonstrates the required
+    per-API folder (apiInformation.json + policy.xml + specification.yaml).
+    Replace with your team's real slice copied from the hub.
+servers:
+  - url: https://example.invalid/exampleteam/orders/v1
+paths:
+  /orders:
+    get:
+      operationId: listOrders
+      summary: List orders
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Order'
+  /orders/{orderId}:
+    get:
+      operationId: getOrder
+      summary: Get a single order
+      parameters:
+        - in: path
+          name: orderId
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Order'
+components:
+  schemas:
+    Order:
+      type: object
+      required: [id, status]
+      properties:
+        id:
+          type: string
+        status:
+          type: string
+          enum: [pending, fulfilled, cancelled]

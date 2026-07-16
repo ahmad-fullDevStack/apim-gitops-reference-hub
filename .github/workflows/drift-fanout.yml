@@ -1,0 +1,176 @@
+name: drift-fanout
+
+# Hub-owned team drift fan-out (hub-and-spoke model).
+#
+# The hub holds the ONLY extractor credential (Reader). It extracts the whole
+# APIM instance once, folds the native layout back into the governance layout
+# (routing each resource into its owning team's folder by name prefix), then
+# fans the result out:
+#
+#   * per team -> checkout that team's spoke repo and, if the extracted slice
+#     differs from the repo slice, open a reconciliation PR IN THE TEAM REPO so
+#     the team's own reviewers decide whether the live change is wanted (accept)
+#     or a drift to revert (reject + republish).
+#   * _unassigned -> resources APIM returned that match no team prefix. This is
+#     a platform alarm (out-of-band publish or naming violation); the job fails
+#     so the platform team investigates.
+#
+# The existing extractor-drift.yml still guards the HUB-owned artifacts
+# (service policy, workspace policy/info, shared/). This workflow only handles
+# the team-owned slices that now live in spoke repos.
+#
+# POC: manual-only (run on demand from the Actions tab). The daily schedule
+# was removed to avoid piling up runs; re-add a `schedule:` trigger for
+# production once a runner is permanently available.
+
+on:
+  workflow_dispatch:
+
+permissions:
+  id-token: write        # OIDC for the extractor login
+  contents: read
+
+jobs:
+  extract:
+    name: Extract + route + alarm
+    runs-on: [self-hosted, linux, x64]
+    outputs:
+      teams: ${{ steps.plan.outputs.teams }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Azure login (OIDC, extractor Reader)
+        uses: azure/login@v2
+        with:
+          client-id: ${{ vars.AZURE_EXTRACTOR_CLIENT_ID }}
+          tenant-id: ${{ vars.AZURE_TENANT_ID }}
+          subscription-id: ${{ vars.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Extract live state and route into governance layout
+        shell: bash
+        env:
+          AZURE_SUBSCRIPTION_ID: ${{ vars.AZURE_SUBSCRIPTION_ID }}
+          AZURE_RESOURCE_GROUP_NAME: ${{ vars.APIM_RG }}
+          API_MANAGEMENT_SERVICE_NAME: ${{ vars.APIM_NAME }}
+          API_MANAGEMENT_SERVICE_OUTPUT_FOLDER_PATH: extracted-native
+          APIOPS_VERSION: ${{ vars.APIOPS_VERSION || 'v7.0.3' }}
+        run: |
+          set -euo pipefail
+          mkdir -p extracted-native/ extracted/
+          python -m pip install --quiet pyyaml lxml
+          curl -sSL -o extractor.zip \
+            "https://github.com/Azure/apiops/releases/download/${APIOPS_VERSION}/extractor-linux-x64.zip"
+          unzip -o -q extractor.zip -d apiops-bin
+          chmod +x apiops-bin/extractor
+          ./apiops-bin/extractor
+          # Route native -> governance. --governance-base preserves the
+          # platform-owned workspace.json (those fields do not exist in APIM).
+          python scripts/apiops_adapter.py to-governance \
+            --src extracted-native/ --dest extracted/ \
+            --config config/ci.json --governance-base apim-config/
+
+      - name: Drift alarm on unassigned resources
+        shell: bash
+        run: |
+          set -euo pipefail
+          # Non-zero exit if APIM holds a resource matching no team prefix.
+          # to-governance writes workspaces/ at the dest root (mirroring the
+          # content of apim-config/), so the routed tree root is `extracted`.
+          python scripts/drift_fanout.py unassigned \
+            --governance-root extracted
+
+      - name: Plan team fan-out
+        id: plan
+        shell: bash
+        run: |
+          set -euo pipefail
+          teams="$(python scripts/drift_fanout.py teams --config config/ci.json)"
+          echo "teams=$teams" >> "$GITHUB_OUTPUT"
+
+      - name: Upload routed extraction
+        uses: actions/upload-artifact@v4
+        with:
+          name: routed-extraction-${{ github.run_id }}
+          path: extracted/
+          retention-days: 7
+
+  reconcile:
+    name: Reconcile ${{ matrix.team.name }}
+    needs: extract
+    runs-on: [self-hosted, linux, x64]
+    if: ${{ needs.extract.outputs.teams != '[]' }}
+    strategy:
+      fail-fast: false
+      matrix:
+        team: ${{ fromJson(needs.extract.outputs.teams) }}
+    steps:
+      # A GitHub App installed on the hub and each spoke repo mints a short-lived
+      # token scoped to just this team's repo. No long-lived PATs; the hub can
+      # open a PR in the spoke but never holds standing write access.
+      - name: Mint spoke-repo token
+        id: token
+        uses: actions/create-github-app-token@v1
+        with:
+          app-id: ${{ vars.DRIFT_APP_ID }}
+          private-key: ${{ secrets.DRIFT_APP_PRIVATE_KEY }}
+          owner: ${{ vars.TEAM_REPO_ORG }}
+          repositories: apim-${{ matrix.team.name }}
+
+      - name: Checkout spoke repo
+        uses: actions/checkout@v4
+        with:
+          repository: ${{ vars.TEAM_REPO_ORG }}/apim-${{ matrix.team.name }}
+          token: ${{ steps.token.outputs.token }}
+          path: spoke
+
+      - name: Download routed extraction
+        uses: actions/download-artifact@v4
+        with:
+          name: routed-extraction-${{ github.run_id }}
+          path: routed
+
+      - name: Overlay extracted slice onto spoke
+        shell: bash
+        env:
+          SLICE: ${{ matrix.team.folder }}
+        run: |
+          set -euo pipefail
+          # The routed artifact has workspaces/ at its root, so strip the
+          # apim-config/ prefix from the ci.json folder to locate the slice.
+          src="routed/${SLICE#apim-config/}"
+          dest="spoke/${SLICE}"
+          if [ ! -d "$src" ]; then
+            # APIM has no resources for this team; nothing to reconcile.
+            echo "No extracted slice for ${{ matrix.team.name }}; skipping."
+            exit 0
+          fi
+          # Mirror the live slice over the repo slice so the PR diff shows
+          # exactly what changed in APIM versus the team's desired state.
+          rm -rf "$dest"
+          mkdir -p "$(dirname "$dest")"
+          cp -r "$src" "$dest"
+
+      - name: Open reconciliation PR in spoke repo
+        uses: peter-evans/create-pull-request@v6
+        with:
+          token: ${{ steps.token.outputs.token }}
+          path: spoke
+          commit-message: "chore(drift): reconcile ${{ matrix.team.name }} with live APIM"
+          title: "chore(drift): reconcile ${{ matrix.team.name }} with live APIM"
+          body: |
+            The hub's scheduled extractor found the live APIM state for
+            **${{ matrix.team.name }}** differs from this repo.
+
+            This PR rewrites the team slice to match APIM so the diff is the
+            drift. Review it:
+
+            * If the live change is intended, **merge** to adopt it as desired
+              state.
+            * If it is unwanted drift, **close** this PR and re-run your
+              publisher to restore the repo state to APIM.
+
+            Allowlist changes (Key Vault / backend hosts) still go through a hub
+            PR against `config/ci.json`.
+          branch: drift/reconcile-${{ github.run_id }}
+          base: main
+          labels: drift, automated

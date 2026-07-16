@@ -1,0 +1,93 @@
+name: reusable-checks
+
+# Reusable guardrail checks for ADVISORY, fast PR feedback in spoke (team) repos.
+#
+# This is NOT the authoritative gate — the authoritative gate is inside
+# team-publish.yml (gate + publish, atomic, hub-owned), which a team cannot skip.
+# A team may weaken or even delete its call to this workflow and it changes
+# nothing about what actually reaches APIM. Its only job is to give the team the
+# same pass/fail signal on their PR that the publish gate will later enforce.
+#
+# It checks out the hub (for the scripts + central config/ci.json) alongside the
+# caller repo (the team's apim-config slice) and runs every check against the
+# team's files using the central allowlists.
+
+on:
+  workflow_call:
+    inputs:
+      hub_repository:
+        type: string
+        default: your-org/apim-gitops-reference
+      hub_ref:
+        type: string
+        default: main
+      runs_on:
+        description: JSON array of runner labels (e.g. '["ubuntu-latest"]' for hosted).
+        type: string
+        default: '["self-hosted", "linux", "x64"]'
+    secrets:
+      hub_token:
+        description: >-
+          Token that can read the (possibly private) hub repo to fetch the
+          shared checks + central ci.json. Use a fine-grained PAT (read-only
+          Contents on the hub) or a GitHub App token. Optional: falls back to
+          the job's github.token, which works only when the hub is public or is
+          the same repo as the caller.
+        required: false
+
+permissions:
+  contents: read
+
+jobs:
+  checks:
+    name: APIM-config checks (advisory)
+    runs-on: ${{ fromJSON(inputs.runs_on) }}
+    steps:
+      - name: Checkout caller (team) repo
+        uses: actions/checkout@v4
+        with:
+          path: caller
+
+      - name: Checkout hub (checks + central ci.json)
+        uses: actions/checkout@v4
+        with:
+          repository: ${{ inputs.hub_repository }}
+          ref: ${{ inputs.hub_ref }}
+          path: hub
+          token: ${{ secrets.hub_token || github.token }}
+
+      # Hosted runners get Python here. Self-hosted runners are expected to have a
+      # suitable Python (3.11+) pre-provisioned on PATH; setup-python does not
+      # support every self-hosted platform (e.g. win-arm64), so it is best-effort.
+      - name: Set up Python (best-effort)
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+        continue-on-error: true
+
+      - name: Verify Python is available
+        shell: pwsh
+        run: python --version
+
+      - name: Install hub tooling
+        working-directory: hub
+        run: python -m pip install -e .
+
+      - name: List team config files
+        shell: pwsh
+        run: |
+          Push-Location caller
+          $files = git ls-files 'apim-config/**'
+          Pop-Location
+          $files | Set-Content -Path changed.txt -Encoding utf8
+          Write-Host "=== Team config files ==="
+          Get-Content changed.txt
+          Write-Host "========================="
+
+      - name: Run checks against central ci.json
+        shell: pwsh
+        run: |
+          python hub/.github/scripts/run_all.py `
+            --changed-files changed.txt `
+            --repo-root caller `
+            --config hub/config/ci.json

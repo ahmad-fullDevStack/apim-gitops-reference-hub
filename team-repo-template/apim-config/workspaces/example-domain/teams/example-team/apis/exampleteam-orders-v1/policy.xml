@@ -1,0 +1,19 @@
+<!-- PLACEHOLDER example-team / orders-v1 API-level policy. Must <base /> back into the workspace policy. -->
+<policies>
+    <inbound>
+        <base />
+        <set-backend-service backend-id="exampleteam-orders" />
+        <set-header name="X-Api-Key" exists-action="override">
+            <value>{{exampleteam-orders-api-key}}</value>
+        </set-header>
+    </inbound>
+    <backend>
+        <base />
+    </backend>
+    <outbound>
+        <base />
+    </outbound>
+    <on-error>
+        <base />
+    </on-error>
+</policies>

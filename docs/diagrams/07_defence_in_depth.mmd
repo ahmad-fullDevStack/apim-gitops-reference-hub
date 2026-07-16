@@ -1,0 +1,112 @@
+---
+config:
+  flowchart:
+    htmlLabels: true
+    nodeSpacing: 45
+    rankSpacing: 55
+    padding: 10
+  themeVariables:
+    fontSize: 17px
+    fontFamily: Segoe UI, Arial, sans-serif
+---
+%% Defence-in-depth: each control row shows where a class of threat is
+%% stopped, going from earliest (left) to latest (right). Inspired by the
+%% control table in reference_architecture.md.
+
+flowchart LR
+    subgraph THREAT["Threat / unsafe action"]
+        direction TB
+        T1["Team A edits team-b files"]
+        T2["Team A references kv-team-b"]
+        T3["Team A omits base/"]
+        T4["Team A names resource teamb-*"]
+        T5["Team A commits literal secret"]
+        T6["Team A creates new workspace 'payments'"]
+        T7["Tier=bronze + active=true"]
+        T8["API marked deprecated, no date"]
+        T9["Two teams ship same backend URL"]
+        T10["Direct portal edit on APIM"]
+        T11["Direct write to APIM RBAC bypass"]
+        T12["KV read from another team at runtime"]
+    end
+
+    subgraph L1["1. Authoring guard (IDE / pre-commit)"]
+        direction TB
+        L1A[".pre-commit-config<br/>actionlint - terraform fmt"]
+    end
+
+    subgraph L2["2. PR pre-merge (CI build validation)"]
+        direction TB
+        L2A["path_scope"]
+        L2B["kv_uri_allowlist"]
+        L2C["base_inheritance"]
+        L2D["naming_convention"]
+        L2E["secret_scan"]
+        L2F["freeze_workspace"]
+        L2G["tier_check"]
+        L2H["versioning"]
+    end
+
+    subgraph L3["3. Human review (CODEOWNERS + ruleset)"]
+        direction TB
+        L3A["Domain leads must approve<br/>workspace.json + policy.xml + shared/"]
+        L3B["Team leads must approve<br/>teams/team-X/"]
+        L3C["Platform team owns<br/>service/ - .github/ - infra/ - config/"]
+        L3D["bypass_actors = []<br/>self-approval off<br/>last-push approval"]
+    end
+
+    subgraph L4["4. Env approval (deploy gate)"]
+        direction TB
+        L4A["GH Environment apim-prod<br/>2 named reviewers"]
+    end
+
+    subgraph L5["5. Azure RBAC (runtime)"]
+        direction TB
+        L5A["Humans: APIM Service Reader floor only"]
+        L5B["Publisher SP: only Contributor"]
+        L5C["Per-team KV RBAC<br/>(no cross-team Secrets User)"]
+    end
+
+    subgraph L6["6. Azure Policy (continuous audit)"]
+        direction TB
+        L6A["Audit: base/ inheritance<br/>(promotes to Deny)"]
+    end
+
+    subgraph L7["7. Monitoring (detective)"]
+        direction TB
+        L7A["Capacity gt 70% alert"]
+        L7B["5xx burst alert"]
+        L7C["App Insights distributed traces"]
+        L7D["extractor-drift hourly<br/>+ auto-revert PR"]
+        L7E["inventory.json artifact<br/>(duplicate detection)"]
+    end
+
+    T1 --> L2A
+    T1 --> L3B
+    T2 --> L2B
+    T3 --> L2C
+    T3 --> L6A
+    T4 --> L2D
+    T5 --> L2E
+    T6 --> L2F
+    T6 --> L3C
+    T7 --> L2G
+    T8 --> L2H
+    T9 --> L7E
+    T10 --> L7D
+    T11 --> L5A
+    T11 --> L5B
+    T12 -. only PR-time today .-> L2B
+    T12 -. runtime gap .-> L5C
+
+    classDef threat fill:#fde2e2,stroke:#c0392b,color:#7d1d1d;
+    classDef preventive fill:#fef9e7,stroke:#b7950b,color:#7d6608;
+    classDef rbac fill:#0a3069,stroke:#0a3069,color:#fff;
+    classDef detective fill:#dff5e1,stroke:#1f8a3a,color:#0a3d1f;
+    classDef gap stroke:#c0392b,stroke-width:2px,color:#c0392b;
+
+    class T1,T2,T3,T4,T5,T6,T7,T8,T9,T10,T11,T12 threat
+    class L1A,L2A,L2B,L2C,L2D,L2E,L2F,L2G,L2H,L3A,L3B,L3C,L3D,L4A preventive
+    class L5A,L5B,L5C rbac
+    class L6A,L7A,L7B,L7C,L7D,L7E detective
+    class T12 gap

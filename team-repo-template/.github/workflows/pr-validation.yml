@@ -1,0 +1,24 @@
+name: pr-validation
+
+# Advisory only. Gives fast pass/fail feedback on PRs using the SAME checks and
+# the SAME central config/ci.json the authoritative publish gate uses — but this
+# is not the control. Even if this call is weakened or removed, nothing bad can
+# reach APIM, because team-publish.yml re-runs the gate before publishing.
+#
+# Pinning is optional here (advisory), but keeping it on a SHA gives you feedback
+# that matches exactly what the publish gate will enforce.
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'apim-config/**'
+
+permissions:
+  contents: read
+
+jobs:
+  advisory-checks:
+    uses: your-org/apim-gitops-reference/.github/workflows/reusable-checks.yml@REPLACE_WITH_HUB_COMMIT_SHA
+    with:
+      hub_repository: your-org/apim-gitops-reference

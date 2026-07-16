@@ -1,0 +1,80 @@
+# Example POC values. Copy to terraform.tfvars and adjust.
+# DO NOT commit a real terraform.tfvars.
+
+subscription_id = "00000000-0000-0000-0000-000000000000"
+location        = "westeurope"
+environment     = "poc"
+owner           = "platform-poc@contoso.invalid"
+
+# APIM SKU. StandardV2_1 (default) supports workspaces on the default managed
+# gateway at a fraction of Premium's cost. Use Premium_1 only if you add
+# dedicated workspace gateways. Confirm StandardV2 is available in `location`.
+sku_name = "StandardV2_1"
+# ISO date stamped into the auto-delete-after tag (global guardrails).
+auto_delete_after = "2026-12-31"
+github_owner    = "contoso"
+github_repo     = "apim-gitops-reference"
+
+# Set to false for plan-only runs that do not touch GitHub
+manage_github_repo = true
+
+# GitHub team slugs (must exist in the org before apply)
+platform_team            = "apim-platform"
+pensions_core_leads_team = "pensions-core-leads"
+
+# Domain workspaces. Keep the keys in sync with apim-config/workspaces/<name>
+# and with `domains[*].name` in config/ci.json. The POC starts with all
+# domains as inactive except pensions-core to keep the bill predictable.
+domains = {
+  "pensions-core" = {
+    display_name = "Pensions Core"
+    tier         = "gold"
+    active       = true
+  }
+  "investments" = {
+    display_name = "Investments"
+    tier         = "gold"
+    active       = false
+  }
+  "customer-identity" = {
+    display_name = "Customer Identity"
+    tier         = "gold"
+    active       = false
+  }
+  "integrations" = {
+    display_name = "Integrations"
+    tier         = "silver"
+    active       = false
+  }
+  "data-reporting" = {
+    display_name = "Data & Reporting"
+    tier         = "silver"
+    active       = false
+  }
+  "shared-services" = {
+    display_name = "Shared Services"
+    tier         = "silver"
+    active       = false
+  }
+  "external-partners" = {
+    display_name = "External Partners"
+    tier         = "silver"
+    active       = false
+  }
+  "sandbox" = {
+    display_name = "Sandbox"
+    tier         = "bronze"
+    active       = false
+  }
+}
+
+alert_email_receivers = [
+  "apim-platform-oncall@contoso.invalid",
+]
+
+# Set once a custom Azure Policy definition for <base/> audit exists.
+# base_policy_definition_id = "/providers/Microsoft.Management/managementGroups/.../providers/Microsoft.Authorization/policyDefinitions/audit-apim-base-inheritance"
+
+tags = {
+  cost_center = "POC"
+}

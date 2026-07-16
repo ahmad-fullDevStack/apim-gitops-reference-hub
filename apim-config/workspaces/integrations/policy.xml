@@ -1,0 +1,16 @@
+<!-- Workspace-level policy. Must <base /> back into the service-level policy. -->
+<policies>
+    <inbound>
+        <base />
+        <set-variable name="domain" value="integrations" />
+    </inbound>
+    <backend>
+        <base />
+    </backend>
+    <outbound>
+        <base />
+    </outbound>
+    <on-error>
+        <base />
+    </on-error>
+</policies>

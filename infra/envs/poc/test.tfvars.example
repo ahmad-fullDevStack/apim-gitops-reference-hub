@@ -1,0 +1,35 @@
+# Test environment overrides.
+
+subscription_id   = "22222222-2222-2222-2222-222222222222"
+location          = "westeurope"
+environment       = "test"
+name_prefix       = "apim-test"
+owner             = "platform-test@contoso.invalid"
+auto_delete_after = "2099-12-31"
+
+github_owner = "contoso"
+github_repo  = "apim-gitops-reference"
+
+manage_github_repo = false
+
+publisher_email = "platform-test@contoso.invalid"
+publisher_name  = "APIM Test Platform"
+
+# Test: production-like footprint (all gold + silver active) for integration
+# coverage; bronze stays off.
+domains = {
+  "pensions-core"      = { display_name = "Pensions Core",     tier = "gold",   active = true }
+  "investments"        = { display_name = "Investments",       tier = "gold",   active = true }
+  "customer-identity"  = { display_name = "Customer Identity", tier = "gold",   active = true }
+  "integrations"       = { display_name = "Integrations",      tier = "silver", active = true }
+  "data-reporting"     = { display_name = "Data & Reporting",  tier = "silver", active = true }
+  "shared-services"    = { display_name = "Shared Services",   tier = "silver", active = true }
+  "external-partners"  = { display_name = "External Partners", tier = "silver", active = true }
+  "sandbox"            = { display_name = "Sandbox",           tier = "bronze", active = false }
+}
+
+alert_email_receivers = ["apim-platform-test@contoso.invalid"]
+
+tags = {
+  cost_center = "TEST"
+}

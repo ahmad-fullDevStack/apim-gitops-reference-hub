@@ -1,0 +1,65 @@
+name: terraform-validate
+
+# Static validation only (no cloud calls). Runs on every PR that touches infra/.
+# Terratest (real cloud) is opt-in and lives in tests/terraform/terratest/.
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'infra/**'
+      - '.github/workflows/terraform-validate.yml'
+
+permissions:
+  contents: read
+  pull-requests: read
+
+jobs:
+  validate:
+    name: terraform fmt / validate / tflint / checkov
+    runs-on: [self-hosted, linux, x64]
+    strategy:
+      fail-fast: false
+      matrix:
+        module:
+          - infra/envs/poc
+          - infra/modules/apim
+          - infra/modules/workspace
+          - infra/modules/team_kv
+          - infra/modules/identity
+          - infra/modules/observability
+          - infra/modules/repo_policy
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.9.5
+
+      - name: terraform fmt -check
+        run: terraform -chdir=${{ matrix.module }} fmt -check -recursive
+
+      - name: terraform init (backend-less)
+        run: terraform -chdir=${{ matrix.module }} init -backend=false
+
+      - name: terraform validate
+        run: terraform -chdir=${{ matrix.module }} validate
+
+      - name: tflint
+        uses: terraform-linters/setup-tflint@v4
+        with:
+          tflint_version: latest
+
+      - name: tflint run
+        run: |
+          cd ${{ matrix.module }}
+          tflint --init
+          tflint --recursive
+
+      - name: checkov
+        uses: bridgecrewio/checkov-action@v12
+        with:
+          directory: ${{ matrix.module }}
+          quiet: true
+          soft_fail: false
+          skip_check: CKV_AZURE_71,CKV_AZURE_109  # documented exemptions; see infra/SECURITY.md

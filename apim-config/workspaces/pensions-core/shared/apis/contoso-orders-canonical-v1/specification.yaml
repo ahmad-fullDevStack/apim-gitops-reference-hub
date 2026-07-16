@@ -1,0 +1,56 @@
+openapi: 3.0.3
+info:
+  title: Contoso Pensions Orders (canonical) v1
+  version: 1.0.0
+  description: |
+    Canonical, domain-owned orders API. Replaces per-team duplicates
+    (teama-orders-v1, teamb-orders-v1, ...). Consumer-specific behaviour
+    is expressed via Products + Subscriptions, not by duplicating this API.
+
+    See PDF §"API Deduplication Strategy → Canonical API per Backend".
+  x-api-version: v1
+  x-deprecation-date: null
+servers:
+  - url: https://pensions-core-api.contoso.com/orders/v1
+paths:
+  /orders:
+    get:
+      operationId: listOrders
+      summary: List orders
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Order'
+  /orders/{orderId}:
+    get:
+      operationId: getOrder
+      summary: Get a single order
+      parameters:
+        - in: path
+          name: orderId
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Order'
+components:
+  schemas:
+    Order:
+      type: object
+      required: [id, status]
+      properties:
+        id:
+          type: string
+        status:
+          type: string
+          enum: [pending, fulfilled, cancelled]

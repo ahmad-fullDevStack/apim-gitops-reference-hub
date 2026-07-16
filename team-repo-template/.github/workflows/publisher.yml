@@ -1,0 +1,38 @@
+name: publisher
+
+# Thin caller. All real logic — the authoritative guardrail gate AND the scoped
+# APIOps publish — lives in the hub-owned reusable workflow `team-publish.yml`.
+# This spoke repo only supplies inputs and its own workspace-scoped credentials;
+# it cannot change what runs between the gate and the publish.
+#
+# SECURITY: pin `@` to a full commit SHA of the hub repo (not a branch/tag) so the
+# guardrails cannot be swapped out from under you. Update the SHA deliberately.
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'apim-config/**'
+  workflow_dispatch:
+
+permissions:
+  id-token: write
+  contents: read
+
+concurrency:
+  group: team-a-publisher
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    uses: your-org/apim-gitops-reference/.github/workflows/team-publish.yml@REPLACE_WITH_HUB_COMMIT_SHA
+    with:
+      team: team-a
+      environment: apim-prod
+      hub_repository: your-org/apim-gitops-reference
+    secrets:
+      # Client ID of THIS team's workspace-scoped publisher SP (provisioned by
+      # the hub's infra/modules/identity per team repo).
+      AZURE_CLIENT_ID: ${{ secrets.AZURE_PUBLISHER_CLIENT_ID }}
+      AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+      AZURE_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}

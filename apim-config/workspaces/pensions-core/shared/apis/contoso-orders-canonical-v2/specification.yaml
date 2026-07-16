@@ -1,0 +1,57 @@
+openapi: 3.0.3
+info:
+  title: Contoso Pensions Orders (canonical) v2
+  version: 2.0.0
+  description: |
+    v2 introduces a breaking change: `status` enum gains the value `refunded`,
+    and `Order` now requires `createdAt`. Existing consumers stay on v1 until
+    the deprecation window expires (see docs/versioning_policy.md).
+  x-api-version: v2
+  x-deprecation-date: null
+servers:
+  - url: https://pensions-core-api.contoso.com/orders/v2
+paths:
+  /orders:
+    get:
+      operationId: listOrdersV2
+      summary: List orders
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Order'
+  /orders/{orderId}:
+    get:
+      operationId: getOrderV2
+      summary: Get a single order
+      parameters:
+        - in: path
+          name: orderId
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Order'
+components:
+  schemas:
+    Order:
+      type: object
+      required: [id, status, createdAt]
+      properties:
+        id:
+          type: string
+        status:
+          type: string
+          enum: [pending, fulfilled, cancelled, refunded]
+        createdAt:
+          type: string
+          format: date-time

@@ -1,0 +1,147 @@
+---
+config:
+  flowchart:
+    htmlLabels: true
+    nodeSpacing: 45
+    rankSpacing: 60
+    padding: 10
+  themeVariables:
+    fontSize: 18px
+    fontFamily: Segoe UI, Arial, sans-serif
+---
+%% Repo topology - every top-level folder and its purpose.
+%% Pair with: 02_gitops_pipeline.mmd
+
+flowchart TB
+    subgraph ROOT["apim-gitops-reference (GitHub repo)"]
+        direction TB
+
+        subgraph CFG["apim-config/  (GitOps source of truth)"]
+            direction TB
+            SVC["service/<br/>platform-owned policy.xml<br/>CORS - HSTS - CSP - JWT - App Insights"]
+            subgraph WS["workspaces/  (one per domain)"]
+                direction LR
+                PC["pensions-core<br/>gold - active<br/>shared/ + teams signpost"]
+                INV["investments<br/>gold"]
+                CI_["customer-identity<br/>gold"]
+                INT["integrations<br/>silver"]
+                DR["data-reporting<br/>silver"]
+                SS["shared-services<br/>silver"]
+                EP["external-partners<br/>silver"]
+                SBX["sandbox<br/>bronze"]
+            end
+        end
+
+        subgraph TEAMS["pensions-core internal layout"]
+            direction TB
+            SHARED["shared/<br/>version-sets - canonical backends<br/>contoso-orders-canonical v1+v2<br/>internal + partner products"]
+            TEAMSDIR["teams/<br/>signpost README only<br/>team API code lives in spoke repos"]
+        end
+        PC --> SHARED
+        PC --> TEAMSDIR
+
+        subgraph SPOKES["Team spoke repos (separate GitHub repos)"]
+            direction LR
+            SPOKE_A["apim-team-a<br/>teams/team-a/ slice<br/>prefix: teama-"]
+            SPOKE_B["apim-team-b<br/>teams/team-b/ slice<br/>prefix: teamb-"]
+        end
+        TEAMSDIR -. code lives in .-> SPOKE_A
+        TEAMSDIR -. code lives in .-> SPOKE_B
+
+        subgraph BACK["backends/"]
+            STUB["stub_orders_api<br/>Azure Function (Python)<br/>demo backend for team-a's sample API (spoke)"]
+        end
+
+        subgraph INFRA["infra/  (Terraform)"]
+            direction TB
+            subgraph MODS["modules/"]
+                direction LR
+                M_APIM["apim"]
+                M_WS["workspace"]
+                M_GW["workspace_gateway"]
+                M_KV["team_kv"]
+                M_ID["identity"]
+                M_OBS["observability"]
+                M_RP["repo_policy"]
+            end
+            subgraph ENVS["envs/"]
+                ENV_POC["poc/ (canonical root)<br/>+ dev|test|prod tfvars"]
+            end
+            RUNNER["runner/<br/>self-hosted GH Actions VM"]
+        end
+
+        subgraph CICFG["config/"]
+            CIJSON["ci.json<br/>workspace_root - teams<br/>domains - valid_tiers<br/>gateway_capacity - allowlists"]
+        end
+
+        subgraph GHA[".github/"]
+            direction TB
+            CODEOWN["CODEOWNERS<br/>per-domain + per-team routing"]
+            subgraph WF["workflows/"]
+                PRV["pr-validation.yml<br/>build validation"]
+                PUB["publisher.yml<br/>Dev to Test to Prod"]
+                EXT["extractor-drift.yml<br/>cron + inventory"]
+                TFV["terraform-validate.yml"]
+                TST["tests.yml"]
+            end
+            subgraph SCR["scripts/  (Python, 100% test coverage)"]
+                direction LR
+                S_COM["_common.py"]
+                S_PS["path_scope"]
+                S_BI["base_inheritance"]
+                S_KV["kv_uri_allowlist"]
+                S_BA["backend_allowlist"]
+                S_NM["naming_convention"]
+                S_SS["secret_scan"]
+                S_TC["tier_check"]
+                S_FW["freeze_workspace"]
+                S_VER["versioning"]
+                S_INV["inventory<br/>(report-only)"]
+                S_RUN["run_all"]
+            end
+        end
+
+        subgraph DOCS["docs/"]
+            direction TB
+            D_REF["reference_architecture.md"]
+            D_PAR["azure_devops_parity.md"]
+            D_RUN["demo_runbook.md"]
+            D_VER["versioning_policy.md"]
+            D_DIA["diagrams/  (this folder)"]
+        end
+
+        subgraph TESTS["tests/unit/  (pytest, 148 tests, 100% cov)"]
+            T_LIST["one test_*.py per script + conftest"]
+        end
+
+        subgraph SCRIPTS["scripts/"]
+            VAL["validate_config_tree.py<br/>strict JSON/YAML/XML lint"]
+        end
+    end
+
+    %% Cross-folder relationships
+    CIJSON -. consumed by .-> SCR
+    SCR -. invoked by .-> WF
+    CODEOWN -. enforced on PRs touching .-> CFG
+    M_RP -. renders .-> CODEOWN
+    ENV_POC -. instantiates .-> MODS
+    PUB -. publishes .-> CFG
+    EXT -. scans .-> CFG
+    TESTS -. validates .-> SCR
+    VAL -. lints .-> CFG
+
+    classDef platform fill:#0a3069,stroke:#0a3069,color:#fff;
+    classDef gold fill:#fff3bf,stroke:#b7950b,color:#7d6608;
+    classDef silver fill:#e9ecef,stroke:#868e96,color:#212529;
+    classDef bronze fill:#f8d7c4,stroke:#a0522d,color:#5b2c0a;
+    classDef gitops fill:#dff5e1,stroke:#1f8a3a,color:#0a3d1f;
+    classDef report fill:#fef9e7,stroke:#b7950b,color:#7d6608;
+    classDef spoke fill:#e7f5ff,stroke:#1971c2,color:#0b4884;
+
+    class SVC,CODEOWN,CIJSON,M_RP platform
+    class PC,INV,CI_ gold
+    class INT,DR,SS,EP silver
+    class SBX bronze
+    class S_INV report
+    class SPOKE_A,SPOKE_B spoke
+    class CFG,SHARED gitops

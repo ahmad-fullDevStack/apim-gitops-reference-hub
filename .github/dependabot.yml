@@ -1,0 +1,33 @@
+version: 2
+updates:
+  - package-ecosystem: github-actions
+    directory: "/"
+    schedule: { interval: weekly }
+    open-pull-requests-limit: 5
+  - package-ecosystem: pip
+    directory: "/"
+    schedule: { interval: weekly }
+  - package-ecosystem: terraform
+    directory: "/infra/envs/poc"
+    schedule: { interval: weekly }
+  - package-ecosystem: terraform
+    directory: "/infra/modules/apim"
+    schedule: { interval: weekly }
+  - package-ecosystem: terraform
+    directory: "/infra/modules/workspace"
+    schedule: { interval: weekly }
+  - package-ecosystem: terraform
+    directory: "/infra/modules/team_kv"
+    schedule: { interval: weekly }
+  - package-ecosystem: terraform
+    directory: "/infra/modules/identity"
+    schedule: { interval: weekly }
+  - package-ecosystem: terraform
+    directory: "/infra/modules/observability"
+    schedule: { interval: weekly }
+  - package-ecosystem: terraform
+    directory: "/infra/modules/repo_policy"
+    schedule: { interval: weekly }
+  - package-ecosystem: gomod
+    directory: "/tests/terraform/terratest"
+    schedule: { interval: weekly }

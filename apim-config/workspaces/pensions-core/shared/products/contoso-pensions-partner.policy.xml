@@ -1,0 +1,20 @@
+<!-- Product-level policy for contoso-pensions-partner. Must <base /> back into the workspace policy. -->
+<policies>
+    <inbound>
+        <base />
+        <rate-limit calls="300" renewal-period="60" />
+        <quota calls="50000" renewal-period="86400" />
+        <ip-filter action="allow">
+            <address-range from="203.0.113.0" to="203.0.113.255" />
+        </ip-filter>
+    </inbound>
+    <backend>
+        <base />
+    </backend>
+    <outbound>
+        <base />
+    </outbound>
+    <on-error>
+        <base />
+    </on-error>
+</policies>

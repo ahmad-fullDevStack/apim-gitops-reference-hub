@@ -1,0 +1,17 @@
+<!-- Product-level policy for contoso-pensions-internal. Must <base /> back into the workspace policy. -->
+<policies>
+    <inbound>
+        <base />
+        <rate-limit calls="5000" renewal-period="60" />
+        <quota calls="1000000" renewal-period="86400" />
+    </inbound>
+    <backend>
+        <base />
+    </backend>
+    <outbound>
+        <base />
+    </outbound>
+    <on-error>
+        <base />
+    </on-error>
+</policies>

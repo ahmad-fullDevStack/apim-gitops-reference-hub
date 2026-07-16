@@ -1,0 +1,95 @@
+---
+config:
+  flowchart:
+    htmlLabels: true
+    nodeSpacing: 45
+    rankSpacing: 60
+    padding: 10
+  themeVariables:
+    fontSize: 18px
+    fontFamily: Segoe UI, Arial, sans-serif
+---
+%% Domain workspace topology per the PDF "Workspace Consolidation".
+%% 8 domain workspaces, 3 tiers, gateway capacity model, canonical APIs.
+
+flowchart TB
+    subgraph SVC["APIM service (Premium_1)"]
+        direction TB
+        SP["Service policy<br/>(platform-owned)"]
+        LOG["App Insights logger"]
+        SP --- LOG
+    end
+
+    subgraph CAP["Gateway capacity model (config.gateway_capacity)"]
+        direction LR
+        CAP1["workspaces_per_instance = 100"]
+        CAP2["workspaces_per_gateway = 30"]
+        CAP3["target_active_workspaces = 10"]
+    end
+
+    subgraph GOLD["Gold tier - SLA-bearing - 12-month support window"]
+        direction LR
+        WS_PC["pensions-core<br/>active = true<br/>owner: pensions-core-leads"]
+        WS_INV["investments<br/>active = false"]
+        WS_CI["customer-identity<br/>active = false"]
+    end
+
+    subgraph SILVER["Silver tier - best-effort - 6-month support window"]
+        direction LR
+        WS_INT["integrations"]
+        WS_DR["data-reporting"]
+        WS_SS["shared-services"]
+        WS_EP["external-partners"]
+    end
+
+    subgraph BRONZE["Bronze tier - experiments - no SLA"]
+        WS_SBX["sandbox<br/>tier_check fails if active=true"]
+    end
+
+    subgraph PC["Inside pensions-core (canonical example)"]
+        direction TB
+        subgraph SHARED["shared/  (owned by pensions-core-leads)"]
+            direction LR
+            VS["version-sets/contoso-orders.json<br/>versioningScheme: Header<br/>versionHeaderName: Api-Version"]
+            BE["backends/contoso-orders-canonical.json<br/>(single shared upstream)"]
+            subgraph APIS["apis/ (canonical)"]
+                V1["contoso-orders-canonical-v1<br/>info.version: 1.0.0"]
+                V2["contoso-orders-canonical-v2<br/>info.version: 2.0.0<br/>(breaking: refunded status)"]
+            end
+            subgraph PRODS["products/"]
+                PINT["contoso-pensions-internal<br/>5000/min<br/>v1 + v2"]
+                PPART["contoso-pensions-partner<br/>300/min - IP allowlist<br/>v1 only"]
+            end
+        end
+        TEAMS_NOTE["teams/  (signpost README only)<br/>team API slices live in per-team spoke repos:<br/>apim-team-a -> teama-orders-v1 + backend + named-value<br/>apim-team-b -> teamb-claims-v1"]
+
+        VS --> V1
+        VS --> V2
+        V1 --> BE
+        V2 --> BE
+        PINT --> V1
+        PINT --> V2
+        PPART --> V1
+    end
+
+    SVC --> GOLD
+    SVC --> SILVER
+    SVC --> BRONZE
+    WS_PC --> PC
+    SVC -. governs capacity by .-> CAP
+
+    classDef gold fill:#fff3bf,stroke:#b7950b,color:#7d6608;
+    classDef silver fill:#e9ecef,stroke:#868e96,color:#212529;
+    classDef bronze fill:#f8d7c4,stroke:#a0522d,color:#5b2c0a;
+    classDef shared fill:#dff5e1,stroke:#1f8a3a,color:#0a3d1f;
+    classDef active stroke:#1f8a3a,stroke-width:3px;
+    classDef cap fill:#e7f5ff,stroke:#1971c2,color:#0b4884;
+    classDef spoke fill:#e7f5ff,stroke:#1971c2,color:#0b4884;
+
+    class WS_PC,WS_INV,WS_CI gold
+    class WS_INT,WS_DR,WS_SS,WS_EP silver
+    class WS_SBX bronze
+    class WS_PC active
+    class SHARED,VS,BE,V1,V2,PINT,PPART shared
+    class TEAMS_NOTE spoke
+    class CAP1,CAP2,CAP3 cap

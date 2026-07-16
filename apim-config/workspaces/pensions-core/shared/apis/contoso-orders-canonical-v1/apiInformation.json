@@ -1,0 +1,14 @@
+{
+  "properties": {
+    "displayName": "Contoso Pensions Orders (canonical) v1",
+    "description": "Canonical, domain-owned orders API. Consumer-specific behaviour is expressed via Products + Subscriptions, not by duplicating this API.",
+    "path": "orders",
+    "protocols": [
+      "https"
+    ],
+    "subscriptionRequired": true,
+    "type": "http",
+    "apiVersion": "v1",
+    "apiVersionSetId": "/workspaces/pensions-core/apiVersionSets/contoso-orders"
+  }
+}

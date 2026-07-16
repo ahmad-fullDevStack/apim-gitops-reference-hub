@@ -1,0 +1,63 @@
+# CODEOWNERS for apim-gitops-reference
+# Generated and managed by the repo_policy Terraform module — do not hand-edit
+# without updating infra/modules/repo_policy/templates/codeowners.tpl.
+#
+# Reference: docs/reference_architecture.md §4.3
+#
+# Routing rule (PDF §"Workspace Consolidation Strategy"):
+#   - Workspace shell (workspace.json + policy.xml + shared/) requires the
+#     domain leads team to approve. Domain leads enforce the canonical
+#     backend + version-set decisions for that domain.
+#   - Team API slices live in per-team spoke repos (hub-and-spoke model), not in
+#     the hub. Only the teams/ signpost README remains here, owned by the leads.
+#   - All cross-cutting paths (.github/, infra/, config/, scripts/, tests/)
+#     are platform-owned.
+
+# Platform team owns everything by default
+*                                                                       @PLATFORM_TEAM_PLACEHOLDER
+
+# ----------------------------------------------------------------------------
+# Apim-config governance
+# ----------------------------------------------------------------------------
+/apim-config/service/                                                   @PLATFORM_TEAM_PLACEHOLDER
+
+# Pensions Core (gold, active)
+/apim-config/workspaces/pensions-core/workspace.json                    @PENSIONS_CORE_LEADS_PLACEHOLDER @PLATFORM_TEAM_PLACEHOLDER
+/apim-config/workspaces/pensions-core/policy.xml                        @PENSIONS_CORE_LEADS_PLACEHOLDER @PLATFORM_TEAM_PLACEHOLDER
+/apim-config/workspaces/pensions-core/shared/                           @PENSIONS_CORE_LEADS_PLACEHOLDER
+# Team API slices live in their own spoke repos (apim-team-a, apim-team-b).
+# Only the teams/ signpost README remains in the hub, owned by the domain leads.
+/apim-config/workspaces/pensions-core/teams/                            @PENSIONS_CORE_LEADS_PLACEHOLDER @PLATFORM_TEAM_PLACEHOLDER
+
+# Investments (gold, inactive at POC time)
+/apim-config/workspaces/investments/                                    @PLATFORM_TEAM_PLACEHOLDER
+
+# Customer Identity (gold, inactive)
+/apim-config/workspaces/customer-identity/                              @PLATFORM_TEAM_PLACEHOLDER
+
+# Integrations (silver, inactive)
+/apim-config/workspaces/integrations/                                   @PLATFORM_TEAM_PLACEHOLDER
+
+# Data & Reporting (silver, inactive)
+/apim-config/workspaces/data-reporting/                                 @PLATFORM_TEAM_PLACEHOLDER
+
+# Shared Services (silver, inactive)
+/apim-config/workspaces/shared-services/                                @PLATFORM_TEAM_PLACEHOLDER
+
+# External Partners (silver, inactive) - extra-tight gate
+/apim-config/workspaces/external-partners/                              @PLATFORM_TEAM_PLACEHOLDER
+
+# Sandbox (bronze, inactive) - even more relaxed once activated; for now
+# platform-owned so nobody mistakes it for a production tier.
+/apim-config/workspaces/sandbox/                                        @PLATFORM_TEAM_PLACEHOLDER
+
+# ----------------------------------------------------------------------------
+# CI scripts and workflows: platform-only
+# ----------------------------------------------------------------------------
+/.github/                                                               @PLATFORM_TEAM_PLACEHOLDER
+/infra/                                                                 @PLATFORM_TEAM_PLACEHOLDER
+/config/                                                                @PLATFORM_TEAM_PLACEHOLDER
+/scripts/                                                               @PLATFORM_TEAM_PLACEHOLDER
+
+# Tests can be modified by either platform or whichever team they cover
+/tests/                                                                 @PLATFORM_TEAM_PLACEHOLDER

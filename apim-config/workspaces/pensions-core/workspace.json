@@ -1,0 +1,8 @@
+{
+  "name": "pensions-core",
+  "displayName": "Pensions Core",
+  "description": "Shared domain workspace for pensions-core teams",
+  "tier": "gold",
+  "active": true,
+  "ownerTeam": "pensions-core-leads"
+}

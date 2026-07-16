@@ -1,0 +1,121 @@
+---
+config:
+  flowchart:
+    htmlLabels: true
+    nodeSpacing: 45
+    rankSpacing: 60
+    padding: 12
+  themeVariables:
+    fontSize: 18px
+    fontFamily: Segoe UI, Arial, sans-serif
+---
+%% Identity, RBAC, OIDC federation and secret flow.
+%% Source: PDF §"RBAC and Access Control" + §"Identified Gaps & Mitigations"
+%% and reference doc §6 (workspace MI gap).
+
+flowchart LR
+    subgraph GH["GitHub Actions"]
+        direction TB
+        WF_PUB["publisher.yml<br/>permissions: id-token: write"]
+        WF_EXT["extractor-drift.yml"]
+        ENV_D["Environment<br/>apim-dev"]
+        ENV_T["Environment<br/>apim-test<br/>1 reviewer"]
+        ENV_P["Environment<br/>apim-prod<br/>2 reviewers"]
+        WF_PUB --> ENV_D
+        WF_PUB --> ENV_T
+        WF_PUB --> ENV_P
+    end
+
+    subgraph OIDC["Entra ID - Federated Identity Credentials"]
+        direction TB
+        APP_PUB["App: sp-apiops-publisher"]
+        APP_EXT["App: sp-apiops-extractor"]
+        FED_D["subject:<br/>repo:org/repo:environment:apim-dev"]
+        FED_T["subject:<br/>repo:org/repo:environment:apim-test"]
+        FED_P["subject:<br/>repo:org/repo:environment:apim-prod"]
+        FED_E["subject:<br/>repo:org/repo:ref:refs/heads/main"]
+        APP_PUB --> FED_D
+        APP_PUB --> FED_T
+        APP_PUB --> FED_P
+        APP_EXT --> FED_E
+    end
+
+    subgraph GROUPS["Entra security groups (per team)"]
+        direction TB
+        GA_C["team-a-contributor"]
+        GA_R["team-a-reader"]
+        GB_C["team-b-contributor"]
+        GB_R["team-b-reader"]
+        GL_C["pensions-core-leads-contributor"]
+        GL_R["pensions-core-leads-reader"]
+    end
+
+    subgraph RBAC["Azure RBAC on APIM"]
+        direction TB
+        R_PUB["sp-apiops-publisher<br/>API Management Service Contributor"]
+        R_EXT["sp-apiops-extractor<br/>Reader"]
+        R_FLOOR["Every team group<br/>API Management Service Reader Role<br/>(service scope - read floor)"]
+        R_WS["team-X-contributor<br/>Workspace Contributor on its workspace"]
+        R_WSR["team-X-reader<br/>Workspace Reader on its workspace"]
+    end
+
+    subgraph APIM["APIM service"]
+        direction TB
+        SVC["Service"]
+        WS["Workspace<br/>(pensions-core)"]
+        MI["Service System-Assigned MI<br/>(shared across workspaces)"]
+        SVC --- WS
+        SVC --- MI
+    end
+
+    subgraph KV["Key Vaults"]
+        direction LR
+        KVA["kv-team-a"]
+        KVB["kv-team-b"]
+    end
+
+    %% OIDC flow
+    ENV_D -.OIDC token.-> FED_D
+    ENV_T -.OIDC token.-> FED_T
+    ENV_P -.OIDC token.-> FED_P
+    WF_EXT -.OIDC token.-> FED_E
+    APP_PUB --> R_PUB
+    APP_EXT --> R_EXT
+
+    %% RBAC
+    GA_C --> R_FLOOR
+    GA_R --> R_FLOOR
+    GB_C --> R_FLOOR
+    GB_R --> R_FLOOR
+    GL_C --> R_FLOOR
+    GL_R --> R_FLOOR
+    GA_C --> R_WS
+    GB_C --> R_WS
+    GL_C --> R_WS
+    GA_R --> R_WSR
+    GB_R --> R_WSR
+    GL_R --> R_WSR
+
+    R_PUB --> SVC
+    R_EXT --> SVC
+    R_FLOOR --> SVC
+    R_WS --> WS
+    R_WSR --> WS
+
+    %% Secret access (runtime)
+    MI -.Key Vault Secrets User.-> KVA
+    MI -.Key Vault Secrets User.-> KVB
+
+    %% Highlighted gap
+    GAP["RUNTIME GAP<br/>shared service MI can resolve<br/>any team's KV named value<br/>--> only blocked at PR time<br/>by kv_uri_allowlist.py<br/>--> long-term: workspace MI"]
+    MI -.-> GAP
+
+    classDef sp fill:#1f6feb,stroke:#1f6feb,color:#fff;
+    classDef azure fill:#0a3069,stroke:#0a3069,color:#fff;
+    classDef gate fill:#fef9e7,stroke:#b7950b,color:#7d6608;
+    classDef gap stroke:#c0392b,stroke-width:2px,color:#c0392b;
+
+    class APP_PUB,APP_EXT,R_PUB,R_EXT sp
+    class SVC,WS,MI,KVA,KVB azure
+    class ENV_D,ENV_T,ENV_P,R_FLOOR,R_WS,R_WSR gate
+    class GAP,MI gap

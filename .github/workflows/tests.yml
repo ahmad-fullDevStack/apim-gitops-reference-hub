@@ -1,0 +1,56 @@
+name: tests
+
+# Unit tests for the CI scripts + workflow linting. Coverage gate is enforced at
+# 100% by pyproject.toml.
+#
+# POC NOTE: trigger is manual-only (workflow_dispatch). This tenant disables
+# GitHub-hosted runners and no [self-hosted, linux, x64] runner is registered, so
+# push/PR triggers would queue runs that can never start. Restore the push/
+# pull_request triggers below once a matching runner is available.
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  python-tests:
+    name: pytest + coverage (100% gate)
+    runs-on: [self-hosted, linux, x64]
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install
+        run: pip install -e .[dev]
+
+      - name: Lint
+        run: ruff check .
+
+      - name: Type-check
+        run: mypy
+
+      - name: Test
+        run: pytest --cov --cov-report=term-missing --cov-report=xml --cov-fail-under=100
+
+      - name: Upload coverage
+        if: always()
+        continue-on-error: true  # Actions storage quota may be exhausted on this account; don't fail the build for that.
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-xml
+          path: coverage.xml
+
+  workflow-lint:
+    name: actionlint
+    runs-on: [self-hosted, linux, x64]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run actionlint
+        uses: raven-actions/actionlint@v2
+        with:
+          fail-on-error: true

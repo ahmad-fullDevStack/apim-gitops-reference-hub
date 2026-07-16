@@ -1,0 +1,8 @@
+{
+  "name": "investments",
+  "displayName": "Investments & Asset Management",
+  "description": "Portfolio mgmt, trading interfaces, risk & performance reporting (PDF §Proposed Workspace Layout #2)",
+  "tier": "gold",
+  "active": false,
+  "ownerTeam": "investments-leads"
+}

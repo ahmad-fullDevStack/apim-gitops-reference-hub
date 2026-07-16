@@ -1,0 +1,10 @@
+{
+  "name": "exampleteam-orders-api-key",
+  "properties": {
+    "displayName": "exampleteam-orders-api-key",
+    "secret": true,
+    "keyVault": {
+      "secretIdentifier": "https://kv-example-domain-example-team.vault.azure.net/secrets/orders-api-key"
+    }
+  }
+}

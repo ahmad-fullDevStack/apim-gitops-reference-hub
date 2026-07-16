@@ -1,0 +1,11 @@
+{
+  "name": "contoso-pensions-partner",
+  "properties": {
+    "displayName": "Pensions — Partner Access",
+    "description": "Bundles the canonical contoso-orders API for external partner consumers. Tighter rate limits, mandatory approval, IP allowlist enforced via the product policy.",
+    "subscriptionRequired": true,
+    "approvalRequired": true,
+    "state": "published",
+    "apis": ["contoso-orders-canonical-v1"]
+  }
+}

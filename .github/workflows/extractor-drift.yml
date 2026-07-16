@@ -1,0 +1,116 @@
+name: extractor-drift
+
+# APIOps extractor. Pulls live APIM state, diffs against
+# apim-config/, opens an auto-revert PR if drift is detected.
+#
+# POC: manual-only (run on demand from the Actions tab). The hourly schedule
+# was removed to avoid piling up runs; re-add a `schedule:` trigger for
+# production once a runner is permanently available.
+
+on:
+  workflow_dispatch:
+
+permissions:
+  id-token: write
+  contents: write
+  pull-requests: write
+
+jobs:
+  extract-and-diff:
+    name: Extract APIM state and diff
+    runs-on: [self-hosted, linux, x64]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Azure login (OIDC)
+        uses: azure/login@v2
+        with:
+          client-id: ${{ vars.AZURE_EXTRACTOR_CLIENT_ID }}
+          tenant-id: ${{ vars.AZURE_TENANT_ID }}
+          subscription-id: ${{ vars.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Extract live state
+        id: extract
+        shell: bash
+        env:
+          # azure/login@v2 above exported the OIDC env that APIOps' Azure.Identity
+          # DefaultAzureCredential consumes. The extractor SP holds Reader only.
+          AZURE_SUBSCRIPTION_ID: ${{ vars.AZURE_SUBSCRIPTION_ID }}
+          AZURE_RESOURCE_GROUP_NAME: ${{ vars.APIM_RG }}
+          API_MANAGEMENT_SERVICE_NAME: ${{ vars.APIM_NAME }}
+          API_MANAGEMENT_SERVICE_OUTPUT_FOLDER_PATH: extracted-native
+          APIOPS_VERSION: ${{ vars.APIOPS_VERSION || 'v7.0.3' }}
+        run: |
+          set -euo pipefail
+          mkdir -p extracted-native/ extracted/
+          python -m pip install --quiet pyyaml lxml
+          # The APIOps extractor emits the native layout (resources grouped by
+          # type per workspace) into API_MANAGEMENT_SERVICE_OUTPUT_FOLDER_PATH.
+          curl -sSL -o extractor.zip \
+            "https://github.com/Azure/apiops/releases/download/${APIOPS_VERSION}/extractor-linux-x64.zip"
+          unzip -o -q extractor.zip -d apiops-bin
+          chmod +x apiops-bin/extractor
+          ./apiops-bin/extractor
+          # Fold the native layout back into the governance layout (teams/ +
+          # shared/) so it can be diffed apples-to-apples against apim-config/.
+          # Without this the diff would report 100% drift every run.
+          python scripts/apiops_adapter.py to-governance \
+            --src extracted-native/ --dest extracted/ \
+            --config config/ci.json --governance-base apim-config/
+
+      - name: Diff against repo state
+        id: diff
+        shell: bash
+        run: |
+          set -euo pipefail
+          # Compare only APIM artifacts. Documentation that lives in the repo
+          # (README.md and similar) has no APIM representation, so the extractor
+          # never reproduces it; excluding it keeps it from registering as
+          # false drift.
+          if diff -rq --exclude='*.md' apim-config/ extracted/ > drift.txt; then
+            echo "no_drift=true" >> "$GITHUB_OUTPUT"
+            echo "No drift detected."
+          else
+            echo "no_drift=false" >> "$GITHUB_OUTPUT"
+            cat drift.txt
+          fi
+
+      # Inventory / dedup report (PDF §"Deduplication Strategy").
+      # Report-only: it never fails the workflow. Uploaded as an artifact so
+      # the platform team can spot duplicate backends/policies across teams
+      # without bouncing into the portal.
+      - name: Run inventory scan
+        if: always()
+        shell: bash
+        run: |
+          set -euo pipefail
+          python .github/scripts/inventory.py --apim-config apim-config/ \
+            > inventory.json
+          python -m json.tool inventory.json > inventory.pretty.json || true
+
+      - name: Upload inventory + drift artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: apim-extractor-${{ github.run_id }}
+          path: |
+            drift.txt
+            inventory.json
+            inventory.pretty.json
+          retention-days: 30
+
+      - name: Open auto-revert PR
+        if: steps.diff.outputs.no_drift == 'false'
+        uses: peter-evans/create-pull-request@v6
+        with:
+          commit-message: "chore(drift): restore APIM config to repo state"
+          title: "chore(drift): restore APIM config to repo state"
+          body: |
+            Drift detected by the scheduled extractor. This PR re-applies the
+            Git-known-good state to APIM. See `drift.txt` (workflow artifact)
+            for the live-vs-repo diff and the originating activity-log entries.
+          branch: drift/auto-revert-${{ github.run_id }}
+          base: main
+          labels: drift, automated

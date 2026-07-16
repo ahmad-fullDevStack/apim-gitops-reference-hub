@@ -1,0 +1,8 @@
+{
+  "name": "exampleteam-orders",
+  "properties": {
+    "description": "PLACEHOLDER backend for the sample API. Replace host with your real backend (must be on your team's allowed_backend_hosts in the hub config/ci.json).",
+    "url": "https://orders.example.invalid/api",
+    "protocol": "http"
+  }
+}
