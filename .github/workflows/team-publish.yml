@@ -86,12 +86,12 @@ jobs:
       APIOPS_VERSION: ${{ inputs.apiops_version }}
     steps:
       - name: Checkout caller (team) repo
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           path: caller
 
       - name: Checkout hub (checks + central ci.json + adapter)
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           repository: ${{ inputs.hub_repository }}
           ref: ${{ inputs.hub_ref }}
