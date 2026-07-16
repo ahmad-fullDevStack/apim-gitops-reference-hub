@@ -37,7 +37,7 @@ jobs:
     outputs:
       teams: ${{ steps.plan.outputs.teams }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Azure login (OIDC, extractor Reader)
         uses: azure/login@v2
@@ -117,7 +117,7 @@ jobs:
           repositories: apim-${{ matrix.team.name }}
 
       - name: Checkout spoke repo
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           repository: ${{ vars.TEAM_REPO_ORG }}/apim-${{ matrix.team.name }}
           token: ${{ steps.token.outputs.token }}
