@@ -2,9 +2,9 @@
 # Generated and managed by the repo_policy Terraform module — do not hand-edit
 # without updating infra/modules/repo_policy/templates/codeowners.tpl.
 #
-# Reference: docs/reference_architecture.md §4.3
+# Reference: docs/reference_architecture.md (path-scoped required reviewers)
 #
-# Routing rule (PDF §"Workspace Consolidation Strategy"):
+# Routing rule (workspace-consolidation strategy):
 #   - Workspace shell (workspace.json + policy.xml + shared/) requires the
 #     domain leads team to approve. Domain leads enforce the canonical
 #     backend + version-set decisions for that domain.

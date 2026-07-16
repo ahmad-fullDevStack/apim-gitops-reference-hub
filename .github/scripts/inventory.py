@@ -1,8 +1,8 @@
 """inventory: scan the entire apim-config tree for duplicate backend URLs and
 near-duplicate policies across teams and workspaces.
 
-Source: PDF §"Workspace Consolidation Roadmap → Phase 1 — Discovery &
-Inventory":
+Implements the discovery & inventory phase of the workspace-consolidation
+roadmap:
 
 - "Detect duplicate APIs: identify APIs with identical or similar backend URLs
   across different workspaces."
@@ -12,7 +12,7 @@ Inventory":
 This script is **report-only** — it never fails CI. It is intended to run on
 schedule (alongside extractor-drift.yml) and post its findings as a workflow
 artifact so the platform team can prioritise the "top 5–10 most-consumed APIs
-to deduplicate first" (PDF §Immediate Stabilization Measures #3).
+to deduplicate first".
 
 Run with ``python .github/scripts/inventory.py --apim-config apim-config/`` to
 produce a JSON report on stdout.

@@ -46,7 +46,7 @@ class TeamConfig:
 
 @dataclass
 class DomainConfig:
-    """Per-domain (workspace) configuration. Source: PDF §"Proposed Workspace Layout"."""
+    """Per-domain (workspace) configuration."""
 
     name: str
     tier: str

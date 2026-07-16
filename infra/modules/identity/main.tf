@@ -102,7 +102,7 @@ resource "azurerm_role_assignment" "extractor_apim_reader" {
 # -----------------------------------------------------------------------------
 # Team Entra groups + RBAC floor.
 #
-# Source: PDF §"RBAC and Access Control" calls out per-workspace contributor /
+# Source: RBAC and access control calls out per-workspace contributor /
 # reader groups, plus a "service-scope floor" that grants every team
 # "API Management Service Reader" so they can see the service envelope without
 # being able to mutate it. The publisher SP remains the sole writer in normal

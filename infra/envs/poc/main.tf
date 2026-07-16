@@ -134,7 +134,7 @@ module "identity" {
 
   # Per-team Entra groups + service-scope Reader floor. Workspace contributor
   # / reader bindings only attach when the team has a real workspace_id.
-  # PDF §"RBAC and Access Control".
+  # RBAC and access control.
   team_groups = {
     "team-a" = {
       workspace_id = module.workspace["pensions-core"].id

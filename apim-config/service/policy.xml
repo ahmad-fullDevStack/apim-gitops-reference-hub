@@ -2,7 +2,7 @@
   Service-level policy. Sets organisation-wide defaults. All workspace and
   API policies must <base /> back into this.
 
-  Reference: PDF §"Centralized Policy Governance with <base/> Inheritance"
+  Reference: centralized policy governance with <base/> inheritance
   enumerates the controls that belong at service scope:
     - Security headers: CORS, CSP, HSTS, X-Content-Type-Options
     - Centralized logging: distributed tracing into Application Insights
@@ -59,7 +59,7 @@
         <forward-request timeout="30" />
     </backend>
     <outbound>
-        <!-- Security response headers (PDF §Implementation). -->
+        <!-- Security response headers. -->
         <set-header name="Strict-Transport-Security" exists-action="override">
             <value>max-age=31536000; includeSubDomains</value>
         </set-header>

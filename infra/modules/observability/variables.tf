@@ -29,7 +29,7 @@ variable "tags" {
 variable "enable_capacity_alerts" {
   type        = bool
   default     = true
-  description = "Provision metric alerts for APIM Capacity > 70% and gateway 5xx spikes (PDF §Performance & Capacity)"
+  description = "Provision metric alerts for APIM Capacity > 70% and gateway 5xx spikes"
 }
 
 variable "alert_email_receivers" {

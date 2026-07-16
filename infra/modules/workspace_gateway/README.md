@@ -1,6 +1,6 @@
 # `workspace_gateway` module
 
-> **Reference source:** the "Workspace Consolidation Strategy" treats workspace
+> **Reference:** the workspace-consolidation strategy treats workspace
 > gateways as the unit of capacity planning. A large domain may run ~10 active
 > workspaces per service today, scaling up to 30 per gateway and 100 per service.
 
@@ -13,7 +13,7 @@ across all workspaces.
 ## Limitations carried over from the platform
 
 - Workspace gateways do **not yet support user-assigned managed identities**
-  attached at the workspace MI scope (PDF §"Identified Gaps and Mitigations").
+  attached at the workspace MI scope.
   Until that lands, secret access for workspaced backends still flows through
   the service-level system-assigned MI.
 - Premium-only.

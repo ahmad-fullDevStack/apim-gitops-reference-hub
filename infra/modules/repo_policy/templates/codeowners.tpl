@@ -1,9 +1,9 @@
 # CODEOWNERS for ${org}
 # Rendered by the repo_policy Terraform module. Do not hand-edit.
 #
-# Reference: docs/reference_architecture.md §4.3
+# Reference: docs/reference_architecture.md (path-scoped required reviewers)
 #
-# Routing rule (PDF §"Workspace Consolidation Strategy"):
+# Routing rule (workspace-consolidation strategy):
 #   - Workspace shell (workspace.json + policy.xml + shared/) requires the
 #     domain leads team to approve. Domain leads enforce the canonical
 #     backend + version-set decisions for that domain.

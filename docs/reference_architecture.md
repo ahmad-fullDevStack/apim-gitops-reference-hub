@@ -18,9 +18,9 @@ APIM is the **abstraction and governance layer for APIs**. It is not a general-p
 |---|---|---|
 | Per-team write isolation on sub-workspace objects | **GitHub (or Azure DevOps)** | APIM has no per-resource RBAC matching at the role level for the built-in roles; CODEOWNERS / path-scoped required reviewers do |
 | Per-tenant data authorization, per-tenant context | **Backend application** | The application knows its own tenancy model; APIM cannot enforce app-level row/object security |
-| Per-team outbound secret isolation at runtime | **Workspace gateway + workspace MI** (future state) | Today's built-in gateway has a single service-MI shared across all workspaces — see §6 (per-team identity on the built-in gateway) of the reference architecture |
+| Per-team outbound secret isolation at runtime | **Workspace gateway + workspace MI** (future state) | Today's built-in gateway has a single service-MI shared across all workspaces — see the per-team identity on the built-in gateway section below |
 
-## The pattern (§4 of the reference architecture)
+## The pattern
 
 1. **Teams hold APIM `Workspace Reader` only.** Never `Workspace Contributor`. The APIOps pipeline service principal is the **sole writer** in normal operations.
 2. **Per-team folders under `apim-config/workspaces/<workspace>/teams/<team>/`.** No team-owned files outside that folder. *(In this reference implementation those per-team folders live in per-team **spoke repos** — `apim-team-a`, `apim-team-b` — that mirror the same path and call the hub's reusable checks; the pattern is identical. See [multi_repo_hub_and_spoke.md](multi_repo_hub_and_spoke.md).)*
@@ -51,23 +51,23 @@ APIM is the **abstraction and governance layer for APIs**. It is not a general-p
 
 ## Source diagrams
 
-See [diagrams/](diagrams/) — these are copies of the two diagrams in the source doc.
+See [diagrams/](diagrams/).
 
-## Wider PDF scope this repo also operationalises
+## Wider scope this repo also operationalises
 
-The PDF goes beyond intra-workspace team isolation. The following controls now live in this repo:
+Beyond intra-workspace team isolation, the following controls live in this repo:
 
-| PDF section | Control | Where it lives |
+| Area | Control | Where it lives |
 |---|---|---|
-| §Workspace Consolidation Strategy | One workspace per **business domain** (~8–10 total), provisioned via `for_each` over `var.domains` | [infra/envs/poc/main.tf](../infra/envs/poc/main.tf), [infra/envs/poc/terraform.tfvars.example](../infra/envs/poc/terraform.tfvars.example) |
-| §Tiering (Gold/Silver/Bronze) | `tier` field in `workspace.json`; CI rejects unknown tiers and Bronze-with-`active=true` | [.github/scripts/tier_check.py](../.github/scripts/tier_check.py), [config/ci.json](../config/ci.json) `valid_tiers` |
-| §"Add-workspace freeze" | Workspaces can only be added if listed in `config/ci.json:domains[]` | [.github/scripts/freeze_workspace.py](../.github/scripts/freeze_workspace.py) |
-| §Versioning Policy | Spec must declare `info.version`; `deprecated:true` requires `x-deprecation-date` | [.github/scripts/versioning.py](../.github/scripts/versioning.py), [versioning_policy.md](versioning_policy.md) |
-| §Deduplication Strategy | Canonical APIs + version sets under `pensions-core/shared/` | [apim-config/workspaces/pensions-core/shared/](../apim-config/workspaces/pensions-core/shared/) |
-| §Deduplication Strategy (discovery) | Inventory scan reports duplicate backend URLs + near-duplicate policies | [.github/scripts/inventory.py](../.github/scripts/inventory.py), uploaded as workflow artifact by extractor-drift.yml |
-| §Centralized Policy Governance | Service-level `<cors>`, CSP, HSTS, X-Content-Type-Options, JWT scaffold, Application Insights logger | [apim-config/service/policy.xml](../apim-config/service/policy.xml), [infra/modules/apim/main.tf](../infra/modules/apim/main.tf) |
-| §Centralized Policy Governance | Azure Policy assignment auditing `<base/>` inheritance (Audit→Deny once teams are clean) | [infra/modules/apim/main.tf](../infra/modules/apim/main.tf) — `azurerm_resource_policy_assignment` |
-| §Performance & Capacity | App Insights + Capacity / 5xx metric alerts | [infra/modules/observability/main.tf](../infra/modules/observability/main.tf) |
-| §Identified Gaps and Mitigations | Workspace gateway skeleton (with documented MI gap) | [infra/modules/workspace_gateway/](../infra/modules/workspace_gateway/) |
-| §RBAC and Access Control | Entra group per team (contributor + reader), service-scope "API Management Service Reader" floor | [infra/modules/identity/main.tf](../infra/modules/identity/main.tf) — `team_groups` |
-| §Environment Separation | Dev / Test / Prod via per-env tfvars; OIDC subject per env (`environment:apim-dev|test|prod`) | [infra/envs/poc/{dev,test,prod}.tfvars.example](../infra/envs/poc/), [.github/workflows/publisher.yml](../.github/workflows/publisher.yml) |
+| Workspace consolidation strategy | One workspace per **business domain** (~8–10 total), provisioned via `for_each` over `var.domains` | [infra/envs/poc/main.tf](../infra/envs/poc/main.tf), [infra/envs/poc/terraform.tfvars.example](../infra/envs/poc/terraform.tfvars.example) |
+| Tiering (Gold/Silver/Bronze) | `tier` field in `workspace.json`; CI rejects unknown tiers and Bronze-with-`active=true` | [.github/scripts/tier_check.py](../.github/scripts/tier_check.py), [config/ci.json](../config/ci.json) `valid_tiers` |
+| Add-workspace freeze | Workspaces can only be added if listed in `config/ci.json:domains[]` | [.github/scripts/freeze_workspace.py](../.github/scripts/freeze_workspace.py) |
+| Versioning policy | Spec must declare `info.version`; `deprecated:true` requires `x-deprecation-date` | [.github/scripts/versioning.py](../.github/scripts/versioning.py), [versioning_policy.md](versioning_policy.md) |
+| Deduplication strategy | Canonical APIs + version sets under `pensions-core/shared/` | [apim-config/workspaces/pensions-core/shared/](../apim-config/workspaces/pensions-core/shared/) |
+| Deduplication strategy (discovery) | Inventory scan reports duplicate backend URLs + near-duplicate policies | [.github/scripts/inventory.py](../.github/scripts/inventory.py), uploaded as workflow artifact by extractor-drift.yml |
+| Centralized policy governance | Service-level `<cors>`, CSP, HSTS, X-Content-Type-Options, JWT scaffold, Application Insights logger | [apim-config/service/policy.xml](../apim-config/service/policy.xml), [infra/modules/apim/main.tf](../infra/modules/apim/main.tf) |
+| Centralized policy governance | Azure Policy assignment auditing `<base/>` inheritance (Audit→Deny once teams are clean) | [infra/modules/apim/main.tf](../infra/modules/apim/main.tf) — `azurerm_resource_policy_assignment` |
+| Performance & capacity | App Insights + Capacity / 5xx metric alerts | [infra/modules/observability/main.tf](../infra/modules/observability/main.tf) |
+| Identified gaps and mitigations | Workspace gateway skeleton (with documented MI gap) | [infra/modules/workspace_gateway/](../infra/modules/workspace_gateway/) |
+| RBAC and access control | Entra group per team (contributor + reader), service-scope "API Management Service Reader" floor | [infra/modules/identity/main.tf](../infra/modules/identity/main.tf) — `team_groups` |
+| Environment separation | Dev / Test / Prod via per-env tfvars; OIDC subject per env (`environment:apim-dev|test|prod`) | [infra/envs/poc/{dev,test,prod}.tfvars.example](../infra/envs/poc/), [.github/workflows/publisher.yml](../.github/workflows/publisher.yml) |

@@ -29,7 +29,7 @@ resource "azapi_resource" "gateway" {
 
 # Binding: associate the gateway with the workspace. Required so APIM routes
 # requests for APIs in that workspace through the dedicated capacity unit.
-# Note: PDF §"Identified Gaps and Mitigations" - workspace gateway MI binding
+# Note: identified gaps and mitigations - workspace gateway MI binding
 # is not yet GA; this module provisions the gateway only. Secret access still
 # flows through the service-level system MI until the gap is addressed.
 resource "azapi_resource" "workspace_binding" {

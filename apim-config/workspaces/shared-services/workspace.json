@@ -1,7 +1,7 @@
 {
   "name": "shared-services",
   "displayName": "Shared Services & Utilities",
-  "description": "Logging, notifications, doc generation, reference data (PDF §Proposed Workspace Layout #6)",
+  "description": "Logging, notifications, doc generation, reference data",
   "tier": "silver",
   "active": false,
   "ownerTeam": "shared-services-leads"

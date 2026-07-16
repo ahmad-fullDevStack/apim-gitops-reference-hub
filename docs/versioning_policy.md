@@ -93,7 +93,7 @@ fails the PR if `deprecated:true` is set without a parseable
 
 ## Why no URL versioning
 
-The PDF (§"Versioning Policy") prefers header-based routing because:
+This policy prefers header-based routing because:
 
 - The published URL never changes across versions, so external docs / OpenAPI
   contracts stay stable.

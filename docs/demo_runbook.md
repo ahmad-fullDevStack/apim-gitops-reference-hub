@@ -147,7 +147,7 @@ git push -u origin demo/tier-bronze-active
 gh pr create --title "Demo: bronze tier active" --body "Expected to fail"
 ```
 
-**Expected:** PR check `tier-check` fails with `tier 'bronze' is not permitted with active=true (PDF: bronze has no SLA)`.
+**Expected:** PR check `tier-check` fails with `Bronze tier carries no resiliency guarantees. An active production workspace cannot be Bronze.`
 
 ## Scenario 8 — deprecated API without deprecation date
 

@@ -61,7 +61,7 @@ variable "team_groups" {
     after apply when wired from the workspace module. Set it false for teams
     that have no workspace yet.
 
-    The PDF §"RBAC and Access Control" specifies this exact pattern
+    RBAC and access control specifies this exact pattern
     (per-workspace groups + service-scope read floor).
   EOT
 }

@@ -1,7 +1,7 @@
 {
   "name": "customer-identity",
   "displayName": "Customer & Identity",
-  "description": "Customer 360, identity & access, auth flows (PDF §Proposed Workspace Layout #3)",
+  "description": "Customer 360, identity & access, auth flows",
   "tier": "gold",
   "active": false,
   "ownerTeam": "customer-identity-leads"

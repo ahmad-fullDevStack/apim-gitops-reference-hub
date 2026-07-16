@@ -1,7 +1,7 @@
 {
   "name": "sandbox",
   "displayName": "Sandbox / Innovation",
-  "description": "Innovation, PoCs, pilots, hackathons (PDF §Proposed Workspace Layout #8). No resiliency guarantees.",
+  "description": "Innovation, PoCs, pilots, hackathons. No resiliency guarantees.",
   "tier": "bronze",
   "active": false,
   "ownerTeam": "sandbox-leads"

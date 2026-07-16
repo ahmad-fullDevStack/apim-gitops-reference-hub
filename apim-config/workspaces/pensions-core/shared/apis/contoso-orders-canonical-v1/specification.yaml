@@ -7,7 +7,7 @@ info:
     (teama-orders-v1, teamb-orders-v1, ...). Consumer-specific behaviour
     is expressed via Products + Subscriptions, not by duplicating this API.
 
-    See PDF §"API Deduplication Strategy → Canonical API per Backend".
+    Follows the API deduplication strategy: one canonical API per backend.
   x-api-version: v1
   x-deprecation-date: null
 servers:

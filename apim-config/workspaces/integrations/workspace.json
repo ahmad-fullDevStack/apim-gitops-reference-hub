@@ -1,7 +1,7 @@
 {
   "name": "integrations",
   "displayName": "Integrations & On-Prem Bridge",
-  "description": "Integration platform, ESB connectors, on-prem adaptation (PDF §Proposed Workspace Layout #4)",
+  "description": "Integration platform, ESB connectors, on-prem adaptation",
   "tier": "silver",
   "active": false,
   "ownerTeam": "integrations-leads"

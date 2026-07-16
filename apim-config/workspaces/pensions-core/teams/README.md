@@ -35,4 +35,4 @@ against the hub's central config.
 
 Follow the cutover runbook in
 [docs/multi_repo_hub_and_spoke.md](../../../../docs/multi_repo_hub_and_spoke.md)
-(§4) and register the team in [`config/ci.json`](../../../../config/ci.json).
+and register the team in [`config/ci.json`](../../../../config/ci.json).

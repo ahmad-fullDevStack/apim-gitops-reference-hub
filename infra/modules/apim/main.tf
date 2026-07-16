@@ -35,8 +35,8 @@ resource "azurerm_api_management" "this" {
 # the assignment so the module remains usable in environments without the
 # definition present.
 #
-# Source: PDF §"Centralized Policy Governance" - "Azure Policy can be used
-# to enforce that all API and workspace policies inherit parent <base/>."
+# Source: centralized policy governance - Azure Policy can be used
+# to enforce that all API and workspace policies inherit parent <base/>.
 # -----------------------------------------------------------------------------
 resource "azurerm_resource_policy_assignment" "base_inheritance" {
   count                = var.base_policy_definition_id == null ? 0 : 1

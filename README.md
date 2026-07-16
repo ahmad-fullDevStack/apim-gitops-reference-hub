@@ -14,7 +14,7 @@ This repository is a **POC scaffold for a customer demo**. It is opinionated, de
 > **Adopting this in your own environment?** Start with the
 > **[Customer implementation guide](docs/IMPLEMENTATION_GUIDE.md)** — a
 > step-by-step "do this on your side" walkthrough, including the field-tested
-> gotchas in [§8 Things to be mindful of](docs/IMPLEMENTATION_GUIDE.md#8-things-to-be-mindful-of-field-tested-gotchas).
+> gotchas in [Things to be mindful of](docs/IMPLEMENTATION_GUIDE.md#8-things-to-be-mindful-of-field-tested-gotchas).
 > The same gotchas are summarised under [Things to be mindful of](#things-to-be-mindful-of) below.
 
 ---
@@ -25,7 +25,7 @@ This repository is a **POC scaffold for a customer demo**. It is opinionated, de
 apim-gitops-reference-hub/
 ├── README.md                      # you are here
 ├── docs/
-│   ├── reference_architecture.md  # condensed pointer to the source doc
+│   ├── reference_architecture.md  # condensed reference architecture
 │   ├── azure_devops_parity.md     # GitHub <-> ADO mapping
 │   ├── demo_runbook.md            # 5 scenarios, step-by-step
 │   └── diagrams/                  # mermaid copies of the source diagrams
@@ -83,20 +83,20 @@ apim-gitops-reference-hub/
 > reusable workflows. See
 > **[docs/multi_repo_hub_and_spoke.md](docs/multi_repo_hub_and_spoke.md)**.
 
-## How the controls in the reference doc map to this repo
+## How the controls map to this repo
 
-| Reference doc § | Control | Where it lives here |
-|---|---|---|
-| §4.2 | Team-owned folders | Per-team **spoke repos** (`apim-team-a`, `apim-team-b`); the hub keeps only the `teams/` signpost + the `config/ci.json` registry — see [docs/multi_repo_hub_and_spoke.md](docs/multi_repo_hub_and_spoke.md) |
-| §4.3 | Path-scoped required reviewers | `.github/CODEOWNERS` + ruleset in `infra/modules/repo_policy/` |
-| §4.3 | Bypass lockdown + self-approval off | Ruleset `bypass_actors = []`, `require_code_owner_review = true`, `dismiss_stale_reviews_on_push = true` |
-| §4.4 | Pipeline-only writes | OIDC-federated `sp-apiops-publisher`; humans hold APIM Reader only |
-| §4.4 | Environment approval gate | `.github/workflows/publisher.yml` targets `environment: apim-prod` with required reviewers |
-| §4.4 | Drift reconciliation | `.github/workflows/extractor-drift.yml` (cron) |
-| §4.4 | Audit retention | Diagnostic settings on APIM + ADO/GitHub audit log forwarded to Log Analytics in `modules/observability/` |
-| §4.5 | 6 CI checks (path scope, base/, KV URI, backend allowlist, naming, secret scan) | `.github/scripts/*.py` invoked from `pr-validation.yml`, marked as required status checks by the ruleset |
-| §5.x | Per-team Key Vault, named values | `infra/modules/team_kv/` (hub-provisioned) + `teams/<team>/named-values/` in the team's spoke repo |
-| §6 | Workspace-gateway MI gap | Documented in `docs/reference_architecture.md`; NOT provisioned (would require workspace gateway) |
+| Control | Where it lives here |
+|---|---|
+| Team-owned folders | Per-team **spoke repos** (`apim-team-a`, `apim-team-b`); the hub keeps only the `teams/` signpost + the `config/ci.json` registry — see [docs/multi_repo_hub_and_spoke.md](docs/multi_repo_hub_and_spoke.md) |
+| Path-scoped required reviewers | `.github/CODEOWNERS` + ruleset in `infra/modules/repo_policy/` |
+| Bypass lockdown + self-approval off | Ruleset `bypass_actors = []`, `require_code_owner_review = true`, `dismiss_stale_reviews_on_push = true` |
+| Pipeline-only writes | OIDC-federated `sp-apiops-publisher`; humans hold APIM Reader only |
+| Environment approval gate | `.github/workflows/publisher.yml` targets `environment: apim-prod` with required reviewers |
+| Drift reconciliation | `.github/workflows/extractor-drift.yml` (cron) |
+| Audit retention | Diagnostic settings on APIM + ADO/GitHub audit log forwarded to Log Analytics in `modules/observability/` |
+| 6 CI checks (path scope, base/, KV URI, backend allowlist, naming, secret scan) | `.github/scripts/*.py` invoked from `pr-validation.yml`, marked as required status checks by the ruleset |
+| Per-team Key Vault, named values | `infra/modules/team_kv/` (hub-provisioned) + `teams/<team>/named-values/` in the team's spoke repo |
+| Workspace-gateway MI gap | Documented in `docs/reference_architecture.md`; NOT provisioned (would require workspace gateway) |
 
 ---
 
@@ -183,8 +183,8 @@ setup *look* fine). The full walkthrough is in the
     *runtime* outbound secret isolation is **not** enforced — only prevented at
     PR time by the KV-URI guardrail. The future-state closer is a workspace
     gateway + workspace-scoped managed identity (Premium). Brief stakeholders on
-    this; it is a platform constraint, not an SCM choice. See
-    §6 (per-team identity on the built-in gateway) of
+    this; it is a platform constraint, not an SCM choice. See the per-team
+    identity on the built-in gateway section of
     [docs/reference_architecture.md](docs/reference_architecture.md).
 
 ---
@@ -228,7 +228,7 @@ MIT. See [LICENSE](LICENSE).
 
 ---
 
-## Source material
+## Reference architecture
 
 This repo operationalises the reference architecture summarised in
 [docs/reference_architecture.md](docs/reference_architecture.md).

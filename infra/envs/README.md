@@ -1,6 +1,6 @@
 # `envs/` — environment composition layer
 
-Per the PDF §"Environment Separation Strategy", the reference platform runs
+Following an environment-separation strategy, the reference platform runs
 under **Dev / Test / Prod** environments. To keep the IaC manageable and to
 avoid drift between near-identical roots, **this repo uses one parameterised
 Terraform root** (`envs/poc/`) plus one **tfvars file per environment**:

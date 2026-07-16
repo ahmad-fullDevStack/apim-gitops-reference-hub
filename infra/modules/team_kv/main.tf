@@ -10,7 +10,7 @@ terraform {
 
 # Per-team Key Vault. RBAC mode (no access policies). The APIM service-MI is
 # granted Secrets User (shared MI is a known gap on the built-in gateway -
-# see docs/reference_architecture.md §6).
+# see docs/reference_architecture.md).
 
 resource "azurerm_key_vault" "this" {
   name                          = var.kv_name

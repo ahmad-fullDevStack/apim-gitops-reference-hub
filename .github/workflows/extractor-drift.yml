@@ -77,7 +77,7 @@ jobs:
             cat drift.txt
           fi
 
-      # Inventory / dedup report (PDF §"Deduplication Strategy").
+      # Inventory / dedup report (deduplication strategy).
       # Report-only: it never fails the workflow. Uploaded as an artifact so
       # the platform team can spot duplicate backends/policies across teams
       # without bouncing into the portal.

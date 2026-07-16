@@ -8,7 +8,7 @@ Mermaid diagrams that, together, give a complete visual representation of everyt
 | 2 | [02_gitops_pipeline.mmd](02_gitops_pipeline.mmd) | End-to-end flow: author → PR + CI → CODEOWNERS review → merge → Dev/Test/Prod publisher → APIM → drift reconciliation. | Understanding the full delivery loop. |
 | 3 | [03_ci_checks.mmd](03_ci_checks.mmd) | The 9 pre-merge CI checks + 1 report-only inventory scan, how they share `_common.py` and are orchestrated by `run_all.py`. | Adding / modifying a CI check. |
 | 4 | [04_terraform_modules.mmd](04_terraform_modules.mmd) | Terraform module dependency graph: what each module under `infra/modules/` provisions and how `envs/poc/` wires them. | Adding a Terraform module or changing the env composition. |
-| 5 | [05_workspace_topology.mmd](05_workspace_topology.mmd) | The 8 domain workspaces (Gold / Silver / Bronze), the gateway capacity model, and the canonical-API + version-set layout inside `pensions-core/shared/`. | Discussing the PDF workspace-consolidation strategy. |
+| 5 | [05_workspace_topology.mmd](05_workspace_topology.mmd) | The 8 domain workspaces (Gold / Silver / Bronze), the gateway capacity model, and the canonical-API + version-set layout inside `pensions-core/shared/`. | Discussing the workspace-consolidation strategy. |
 | 6 | [06_identity_rbac.mmd](06_identity_rbac.mmd) | Service principals, OIDC federation, Entra security groups, the Service-Reader floor, and the documented runtime KV gap. | Auditing RBAC or wiring a new team. |
 | 7 | [07_defence_in_depth.mmd](07_defence_in_depth.mmd) | For each threat / unsafe action, every layer that stops it (pre-commit → PR → CODEOWNERS → env gate → Azure RBAC → Azure Policy → monitoring). | Security review or compliance walkthrough. |
 

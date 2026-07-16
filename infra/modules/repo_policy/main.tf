@@ -8,7 +8,7 @@ terraform {
   }
 }
 
-# Repository ruleset on main implementing §4.3 of the reference doc:
+# Repository ruleset on main implementing the path-scoped review controls:
 # - PR required, CODEOWNERS review required;
 # - required status checks for the six CI checks + terraform + tests;
 # - no bypass actors (admin bypass denied);

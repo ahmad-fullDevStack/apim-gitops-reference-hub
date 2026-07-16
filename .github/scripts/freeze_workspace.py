@@ -1,8 +1,7 @@
-"""freeze_workspace: enforce the PDF "freeze new workspace creation" rule.
+"""freeze_workspace: enforce the "freeze new workspace creation" rule.
 
-Source: PDF §"Immediate Stabilization Measures" #1 — "No new team-specific
-workspaces should be created. All new APIs must be placed into one of the
-target domain workspaces."
+No new team-specific workspaces should be created. All new APIs must be placed
+into one of the target domain workspaces.
 
 A PR creates a new workspace if it adds a ``workspace.json`` whose containing
 directory name is not already listed in ``config/ci.json::domains``. CODEOWNERS
@@ -63,7 +62,7 @@ def check(
                     path=path,
                     message=(
                         f"new workspace '{ws}' is not in config/ci.json::domains. "
-                        "PDF §Immediate Stabilization Measures #1 freezes new "
+                        "The workspace-creation policy freezes new "
                         "workspace creation; new APIs must go into one of the "
                         "existing target domain workspaces. If a new workspace "
                         "is genuinely required, add it to config/ci.json::domains "

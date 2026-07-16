@@ -1,6 +1,6 @@
 """tier_check: every ``workspace.json`` must declare a valid resiliency tier.
 
-Source: PDF §"Resiliency, Reliability, RTO, and RPO Awareness". Each domain
+Resiliency, reliability, RTO, and RPO awareness: each domain
 workspace is classified Gold (regulated, monitored), Silver (best-effort), or
 Bronze (sandbox). The tier drives downstream controls (e.g. JWT validation
 required on Gold, no resiliency guarantees on Bronze).
@@ -95,7 +95,7 @@ def check(
                     rule="tier-check",
                     path=rel_path,
                     message=(
-                        "Bronze tier carries no resiliency guarantees (PDF §Resiliency). "
+                        "Bronze tier carries no resiliency guarantees. "
                         "An active production workspace cannot be Bronze."
                     ),
                 )

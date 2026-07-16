@@ -12,8 +12,7 @@ config:
 %% The 9 pre-merge CI checks + 1 report-only inventory scan.
 %% Each check is a Python module under .github/scripts/, sharing _common.py,
 %% orchestrated by run_all.py, invoked from pr-validation.yml.
-%% Source: docs/reference_architecture.md §4.5 +
-%%         reference architecture "Workspace Consolidation, Governance & Dedup Strategy".
+%% Covers team isolation plus the workspace consolidation, governance & dedup strategy.
 
 flowchart TB
     subgraph IN["Inputs"]
@@ -31,7 +30,7 @@ flowchart TB
 
     subgraph PRE["Pre-merge gates (block merge on failure)"]
         direction TB
-        subgraph ISO["Team isolation - source: §4.5"]
+        subgraph ISO["Team isolation"]
             C1["path_scope.py<br/>fails if a team writes outside teams/its-folder/<br/>also blocks platform-only paths"]
             C2["base_inheritance.py<br/>every policy.xml must base/ in<br/>inbound/backend/outbound/on-error"]
             C3["kv_uri_allowlist.py<br/>named-value KV URI host must be in<br/>team.allowed_key_vaults"]
@@ -39,7 +38,7 @@ flowchart TB
             C5["naming_convention.py<br/>file stem must start with team prefix<br/>across apis/backends/named-values/products/version-sets"]
             C6["secret_scan.py<br/>literal connection strings - keys - PATs<br/>in any committed file"]
         end
-        subgraph GOV["Governance - source: PDF"]
+        subgraph GOV["Governance"]
             C7["tier_check.py<br/>workspace.json tier in valid_tiers<br/>bronze cannot have active=true"]
             C8["freeze_workspace.py<br/>new workspace folder must be<br/>declared in config.domains[]"]
             C9["versioning.py<br/>info.version required (non-empty string)<br/>deprecated=true requires<br/>x-deprecation-date (ISO 8601)"]

@@ -1,8 +1,8 @@
 """versioning: every API specification must declare ``info.version`` and, if
 marked deprecated, must carry an ``x-deprecation-date`` in the future or up to
-the PDF-defined minimum support window in the past.
+the defined minimum support window in the past.
 
-Source: PDF §"Versioning Breaking Changes":
+Versioning of breaking changes:
 
 - "Every breaking change requires a new API version"
 - "Older versions must have a documented deprecation date"
@@ -84,7 +84,7 @@ def check(
                 Violation(
                     rule="versioning",
                     path=rel_path,
-                    message="info.version is required (PDF §Versioning Breaking Changes).",
+                    message="info.version is required.",
                 )
             )
             continue

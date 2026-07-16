@@ -1,7 +1,7 @@
 {
   "name": "data-reporting",
   "displayName": "Data & Reporting",
-  "description": "Data platform, reporting, analytics integration (PDF §Proposed Workspace Layout #5)",
+  "description": "Data platform, reporting, analytics integration",
   "tier": "silver",
   "active": false,
   "ownerTeam": "data-reporting-leads"

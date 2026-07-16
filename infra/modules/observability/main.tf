@@ -38,8 +38,8 @@ resource "azurerm_monitor_diagnostic_setting" "apim" {
 # instrumentation key (consumed in apim-config/service/policy.xml via a future
 # <log-to-eventhub> / <trace> policy when wired to a Loggers resource).
 #
-# Source: PDF §"Implementation" - "Centralized logging: integration with
-# Application Insights for distributed tracing and analytics."
+# Source: centralized logging - integration with
+# Application Insights for distributed tracing and analytics.
 # -----------------------------------------------------------------------------
 resource "azurerm_application_insights" "this" {
   name                = "${var.workspace_name}-ai"
@@ -52,9 +52,9 @@ resource "azurerm_application_insights" "this" {
 }
 
 # -----------------------------------------------------------------------------
-# Capacity / SLO alerts. PDF §"Performance & Capacity" mitigation:
-# "Use Azure Monitor capacity metrics (CPU, memory, throughput) to monitor
-# resource utilization."
+# Capacity / SLO alerts. Performance & capacity mitigation:
+# Use Azure Monitor capacity metrics (CPU, memory, throughput) to monitor
+# resource utilization.
 # -----------------------------------------------------------------------------
 resource "azurerm_monitor_action_group" "platform" {
   count               = var.alert_email_receivers == null ? 0 : (length(var.alert_email_receivers) > 0 ? 1 : 0)
@@ -82,7 +82,7 @@ resource "azurerm_monitor_metric_alert" "apim_capacity_high" {
   name                = "alert-${var.workspace_name}-apim-capacity-high"
   resource_group_name = var.resource_group_name
   scopes              = [var.apim_id]
-  description         = "APIM Capacity metric > 70% over 5 min. PDF treats gateway capacity as first-class constraint."
+  description         = "APIM Capacity metric > 70% over 5 min. Gateway capacity is a first-class constraint."
   severity            = 2
   frequency           = "PT5M"
   window_size         = "PT15M"

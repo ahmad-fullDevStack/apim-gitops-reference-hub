@@ -6,9 +6,9 @@ repository as the starting template.
 
 > This guide is the practical "do this on your side" companion to the
 > conceptual material. For the *why*, read
-> [docs/reference_architecture.md](reference_architecture.md) and the source
-> deck/PDF. For the *what maps to what*, read the tables in
-> [README.md](../README.md#how-the-controls-in-the-reference-doc-map-to-this-repo)
+> [docs/reference_architecture.md](reference_architecture.md). For the *what
+> maps to what*, read the tables in
+> [README.md](../README.md#how-the-controls-map-to-this-repo)
 > and [docs/azure_devops_parity.md](azure_devops_parity.md). This document is
 > the *how*, plus the **gotchas we verified end-to-end** so you don't rediscover
 > them the hard way.
@@ -56,7 +56,7 @@ guardrails block the changes they are supposed to block.
 
 1. Fork/clone this repo into your org.
 2. Edit [config/ci.json](../config/ci.json):
-   - `domains[]` — your business-domain workspaces (the PDF recommends ~8–10).
+   - `domains[]` — your business-domain workspaces (~8–10 recommended).
    - `teams[]` — each team's `name`, folder, reviewer group, and naming `prefix`.
    - `valid_tiers`, `kv_allowlist`, `backend_allowlist` — your governance values.
 3. Rename the folders under `apim-config/workspaces/` and
@@ -254,7 +254,8 @@ are environmental, not code:
     prevented at PR time by the KV-URI guardrail. The future-state closer is a
     **workspace gateway + workspace-scoped managed identity** (Premium). This is
     a platform constraint, not an SCM choice — call it out to stakeholders. See
-    §6 (per-team identity on the built-in gateway) of the reference architecture.
+    the per-team identity on the built-in gateway section of
+    [docs/reference_architecture.md](reference_architecture.md).
 11. **Cost & teardown.** APIM deletion takes ~45 min; Key Vault soft-delete
     retention is 7 days. Tag `auto-delete-after` and `terraform destroy`
     promptly after a demo. (§3)

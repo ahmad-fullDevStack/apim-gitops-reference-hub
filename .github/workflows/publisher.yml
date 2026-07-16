@@ -2,7 +2,7 @@ name: publisher
 
 # APIOps publisher with Dev -> Test -> Prod promotion.
 #
-# Source: PDF §"Environment Separation Strategy" - every change must be
+# Environment separation strategy: every change must be
 # observed in Dev, then Test, before reaching Prod, with a human approval
 # gate at the Prod GitHub Environment.
 #

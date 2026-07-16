@@ -1,7 +1,7 @@
 {
   "name": "external-partners",
   "displayName": "External Partners & Ecosystem",
-  "description": "Partner onboarding, B2B integrations, portals (PDF §Proposed Workspace Layout #7)",
+  "description": "Partner onboarding, B2B integrations, portals",
   "tier": "silver",
   "active": false,
   "ownerTeam": "external-partners-leads"
