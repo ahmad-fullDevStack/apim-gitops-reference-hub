@@ -124,7 +124,7 @@ jobs:
           path: spoke
 
       - name: Download routed extraction
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: routed-extraction-${{ github.run_id }}
           path: routed
