@@ -92,7 +92,7 @@ jobs:
           fetch-depth: 0
 
       - name: Azure login (OIDC, dev)
-        uses: azure/login@v2
+        uses: azure/login@v3
         with:
           client-id: ${{ vars.AZURE_PUBLISHER_CLIENT_ID_DEV }}
           tenant-id: ${{ vars.AZURE_TENANT_ID }}
@@ -112,7 +112,7 @@ jobs:
       - name: Run APIOps publisher (dev)
         shell: bash
         env:
-          # azure/login@v2 above exported the OIDC env that APIOps' Azure.Identity
+          # azure/login@v3 above exported the OIDC env that APIOps' Azure.Identity
           # DefaultAzureCredential consumes (AZURE_CLIENT_ID / AZURE_TENANT_ID /
           # AZURE_FEDERATED_TOKEN_FILE). No secret is handled here.
           AZURE_SUBSCRIPTION_ID: ${{ vars.AZURE_SUBSCRIPTION_ID_DEV }}
@@ -141,7 +141,7 @@ jobs:
           fetch-depth: 0
 
       - name: Azure login (OIDC, test)
-        uses: azure/login@v2
+        uses: azure/login@v3
         with:
           client-id: ${{ vars.AZURE_PUBLISHER_CLIENT_ID_TEST }}
           tenant-id: ${{ vars.AZURE_TENANT_ID }}
@@ -189,7 +189,7 @@ jobs:
           fetch-depth: 0
 
       - name: Azure login (OIDC, prod)
-        uses: azure/login@v2
+        uses: azure/login@v3
         with:
           client-id: ${{ vars.AZURE_PUBLISHER_CLIENT_ID }}
           tenant-id: ${{ vars.AZURE_TENANT_ID }}
