@@ -25,11 +25,11 @@ concurrency:
 
 jobs:
   publish:
-    uses: your-org/apim-gitops-reference/.github/workflows/team-publish.yml@REPLACE_WITH_HUB_COMMIT_SHA
+    uses: your-org/apim-gitops-reference-hub/.github/workflows/team-publish.yml@REPLACE_WITH_HUB_COMMIT_SHA
     with:
       team: team-a
       environment: apim-prod
-      hub_repository: your-org/apim-gitops-reference
+      hub_repository: your-org/apim-gitops-reference-hub
     secrets:
       # Client ID of THIS team's workspace-scoped publisher SP (provisioned by
       # the hub's infra/modules/identity per team repo).

@@ -9,8 +9,8 @@ id runner
 
 echo
 echo "=== systemd unit ==="
-systemctl is-active 'actions.runner.<github-owner>-apim-gitops-reference.gha-runner-01.service' || true
-systemctl is-enabled 'actions.runner.<github-owner>-apim-gitops-reference.gha-runner-01.service' || true
+systemctl is-active 'actions.runner.<github-owner>-apim-gitops-reference-hub.gha-runner-01.service' || true
+systemctl is-enabled 'actions.runner.<github-owner>-apim-gitops-reference-hub.gha-runner-01.service' || true
 
 echo
 echo "=== toolchain (via runner login shell) ==="

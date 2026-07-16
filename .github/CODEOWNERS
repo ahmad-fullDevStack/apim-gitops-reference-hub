@@ -1,4 +1,4 @@
-# CODEOWNERS for apim-gitops-reference
+# CODEOWNERS for apim-gitops-reference-hub
 # Generated and managed by the repo_policy Terraform module — do not hand-edit
 # without updating infra/modules/repo_policy/templates/codeowners.tpl.
 #

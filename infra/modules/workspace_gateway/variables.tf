@@ -26,6 +26,6 @@ variable "region" {
 
 variable "description" {
   type        = string
-  default     = "Workspace gateway provisioned by apim-gitops-reference"
+  default     = "Workspace gateway provisioned by apim-gitops-reference-hub"
   description = "Free-text description shown in the portal."
 }

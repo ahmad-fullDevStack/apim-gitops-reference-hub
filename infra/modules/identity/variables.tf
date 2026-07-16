@@ -15,7 +15,7 @@ variable "github_owner" {
 
 variable "github_repo" {
   type        = string
-  description = "Repository name (e.g. 'apim-gitops-reference')"
+  description = "Repository name (e.g. 'apim-gitops-reference-hub')"
 }
 
 variable "spoke_repos" {

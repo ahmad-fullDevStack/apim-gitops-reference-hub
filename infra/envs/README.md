@@ -20,17 +20,17 @@ infra/envs/poc/
 
 ```pwsh
 # Dev
-terraform init -backend-config="key=apim-gitops-reference.dev.tfstate"
+terraform init -backend-config="key=apim-gitops-reference-hub.dev.tfstate"
 terraform plan  -var-file=dev.tfvars -out=tfplan
 terraform apply tfplan
 
 # Test
-terraform init -reconfigure -backend-config="key=apim-gitops-reference.test.tfstate"
+terraform init -reconfigure -backend-config="key=apim-gitops-reference-hub.test.tfstate"
 terraform plan  -var-file=test.tfvars -out=tfplan
 terraform apply tfplan
 
 # Prod
-terraform init -reconfigure -backend-config="key=apim-gitops-reference.prod.tfstate"
+terraform init -reconfigure -backend-config="key=apim-gitops-reference-hub.prod.tfstate"
 terraform plan  -var-file=prod.tfvars -out=tfplan
 terraform apply tfplan
 ```

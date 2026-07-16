@@ -10,7 +10,7 @@ owner             = "platform-dev@contoso.invalid"
 auto_delete_after = "2099-12-31"
 
 github_owner = "contoso"
-github_repo  = "apim-gitops-reference"
+github_repo  = "apim-gitops-reference-hub"
 
 # Repo policy is owned by prod only.
 manage_github_repo = false

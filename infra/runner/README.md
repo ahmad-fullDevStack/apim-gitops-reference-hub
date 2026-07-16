@@ -1,7 +1,7 @@
 # Self-hosted GitHub Actions runner (POC)
 
 This subdirectory bootstraps a **single** Azure VM that runs the GitHub Actions
-runner agent for `<github-owner>/apim-gitops-reference`. It exists
+runner agent for `<github-owner>/apim-gitops-reference-hub`. It exists
 because GitHub-hosted runners are disabled at the org/enterprise level for this
 repo (see the failed runs on `main` for the explicit annotation).
 
@@ -146,10 +146,10 @@ az group delete --name rg-apim-gitops-runner-poc --yes --no-wait
 Then deregister the orphaned runner record:
 
 ```bash
-gh api repos/<github-owner>/apim-gitops-reference/actions/runners \
+gh api repos/<github-owner>/apim-gitops-reference-hub/actions/runners \
   --jq '.runners[] | select(.name == "gha-runner-01") | .id' \
   | xargs -I {} gh api -X DELETE \
-    repos/<github-owner>/apim-gitops-reference/actions/runners/{}
+    repos/<github-owner>/apim-gitops-reference-hub/actions/runners/{}
 ```
 
 ## Workflow change required

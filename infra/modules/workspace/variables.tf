@@ -14,5 +14,5 @@ variable "workspace_display_name" {
 
 variable "workspace_description" {
   type    = string
-  default = "Shared domain workspace provisioned by apim-gitops-reference"
+  default = "Shared domain workspace provisioned by apim-gitops-reference-hub"
 }

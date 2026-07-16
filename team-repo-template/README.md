@@ -3,7 +3,7 @@
 This folder is a **copy-me starting point** for a single team's own repository in
 the hub-and-spoke (multi-repo) model. Each team gets its own repo containing
 **only its slice** of the APIM config; the hub
-([apim-gitops-reference](../)) stays the platform-owned control plane that owns
+([apim-gitops-reference-hub](../)) stays the platform-owned control plane that owns
 the guardrail checks, `config/ci.json`, the shared/canonical APIs, and drift
 detection.
 
@@ -73,7 +73,7 @@ or skip the check. Two isolation layers back it up:
    (`apim-config/workspaces/example-domain/`) and copy your team's **real slice**
    from the hub (`apim-config/workspaces/<domain>/teams/<team>/`) into the **same
    mirrored path** in the spoke. Use the sample only as a layout reference.
-3. `your-org/apim-gitops-reference` → your hub repo's `owner/name` (in both workflows).
+3. `your-org/apim-gitops-reference-hub` → your hub repo's `owner/name` (in both workflows).
 4. `@REPLACE_WITH_HUB_COMMIT_SHA` → a **full commit SHA** of the hub repo. Pin to a
    SHA, not a branch/tag, so the guardrails can't be swapped out.
 5. `team-a` → your team folder name; `pensions-core` → your domain workspace.

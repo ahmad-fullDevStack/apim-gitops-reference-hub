@@ -17,7 +17,7 @@ on:
     inputs:
       hub_repository:
         type: string
-        default: your-org/apim-gitops-reference
+        default: your-org/apim-gitops-reference-hub
       hub_ref:
         type: string
         default: main

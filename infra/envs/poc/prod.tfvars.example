@@ -15,7 +15,7 @@ owner             = "platform-prod@contoso.invalid"
 auto_delete_after = "2099-12-31"
 
 github_owner = "contoso"
-github_repo  = "apim-gitops-reference"
+github_repo  = "apim-gitops-reference-hub"
 
 # Prod is the canonical owner of the GitHub branch protection / CODEOWNERS.
 manage_github_repo = true

@@ -19,6 +19,6 @@ permissions:
 
 jobs:
   advisory-checks:
-    uses: your-org/apim-gitops-reference/.github/workflows/reusable-checks.yml@REPLACE_WITH_HUB_COMMIT_SHA
+    uses: your-org/apim-gitops-reference-hub/.github/workflows/reusable-checks.yml@REPLACE_WITH_HUB_COMMIT_SHA
     with:
-      hub_repository: your-org/apim-gitops-reference
+      hub_repository: your-org/apim-gitops-reference-hub

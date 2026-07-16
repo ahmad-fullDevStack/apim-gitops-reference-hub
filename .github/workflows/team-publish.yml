@@ -30,7 +30,7 @@ on:
       hub_repository:
         description: owner/name of the hub repo that owns the checks + ci.json
         type: string
-        default: your-org/apim-gitops-reference
+        default: your-org/apim-gitops-reference-hub
       hub_ref:
         description: Git ref of the hub repo to source checks/config from
         type: string

@@ -13,7 +13,7 @@ sku_name = "StandardV2_1"
 # ISO date stamped into the auto-delete-after tag (global guardrails).
 auto_delete_after = "2026-12-31"
 github_owner    = "contoso"
-github_repo     = "apim-gitops-reference"
+github_repo     = "apim-gitops-reference-hub"
 
 # Set to false for plan-only runs that do not touch GitHub
 manage_github_repo = true

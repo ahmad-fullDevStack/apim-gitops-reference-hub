@@ -1,7 +1,7 @@
 <#
 .SYNOPSIS
   Provisions an Azure VM that runs the GitHub Actions self-hosted runner
-  for <github-owner>/apim-gitops-reference.
+  for <github-owner>/apim-gitops-reference-hub.
 
 .DESCRIPTION
   See README.md in this directory for full design notes and cost estimate.
@@ -22,7 +22,7 @@ param(
     [string]$RunnerName          = 'gha-runner-01',
     [string]$RunnerLabels        = 'self-hosted,linux,x64,azure-poc',
     [string]$RunnerVersion       = '2.319.1',
-    [string]$Repo                = '<github-owner>/apim-gitops-reference',
+    [string]$Repo                = '<github-owner>/apim-gitops-reference-hub',
     [string]$AutoShutdownTimeUtc = '1900',
     [string]$SshPubKeyPath       = (Join-Path $env:USERPROFILE '.ssh\id_rsa_apim_runner.pub')
 )
@@ -45,7 +45,7 @@ Write-Host "==> Ensuring resource group $ResourceGroup..." -ForegroundColor Cyan
 az group create `
     --name $ResourceGroup `
     --location $Location `
-    --tags purpose=github-actions-runner owner=<owner> environment=poc auto-delete-after=2026-09-08 repo=apim-gitops-reference `
+    --tags purpose=github-actions-runner owner=<owner> environment=poc auto-delete-after=2026-09-08 repo=apim-gitops-reference-hub `
     --only-show-errors -o none
 
 $repoUrl = "https://github.com/$Repo"
@@ -82,7 +82,7 @@ else {
         --nsg nsg-gha-runner `
         --os-disk-size-gb 30 `
         --storage-sku StandardSSD_LRS `
-        --tags purpose=github-actions-runner owner=<owner> environment=poc auto-delete-after=2026-09-08 repo=apim-gitops-reference `
+        --tags purpose=github-actions-runner owner=<owner> environment=poc auto-delete-after=2026-09-08 repo=apim-gitops-reference-hub `
         --only-show-errors -o table
     if ($LASTEXITCODE -ne 0) { throw 'az vm create failed.' }
 }

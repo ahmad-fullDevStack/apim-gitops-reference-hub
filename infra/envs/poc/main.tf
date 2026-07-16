@@ -53,7 +53,7 @@ resource "random_string" "suffix" {
 locals {
   prefix = "${var.name_prefix}-${random_string.suffix.result}"
   tags = merge(var.tags, {
-    project             = "apim-gitops-reference"
+    project             = "apim-gitops-reference-hub"
     environment         = var.environment
     managed_by          = "terraform"
     owner               = var.owner

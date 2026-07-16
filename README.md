@@ -1,4 +1,4 @@
-# apim-gitops-reference
+# apim-gitops-reference-hub
 
 A reference implementation of the **Azure API Management + GitOps multi-team isolation pattern** described in [docs/reference_architecture.md](docs/reference_architecture.md).
 
@@ -22,7 +22,7 @@ This repository is a **POC scaffold for a customer demo**. It is opinionated, de
 ## Repository layout
 
 ```
-apim-gitops-reference/
+apim-gitops-reference-hub/
 ├── README.md                      # you are here
 ├── docs/
 │   ├── reference_architecture.md  # condensed pointer to the source doc

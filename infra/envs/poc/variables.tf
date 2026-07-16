@@ -32,12 +32,12 @@ variable "sku_name" {
 
 variable "github_owner" {
   type        = string
-  description = "GitHub org/user owning the apim-gitops-reference repository"
+  description = "GitHub org/user owning the apim-gitops-reference-hub repository"
 }
 
 variable "github_repo" {
   type    = string
-  default = "apim-gitops-reference"
+  default = "apim-gitops-reference-hub"
 }
 
 variable "manage_github_repo" {
