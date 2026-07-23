@@ -60,7 +60,7 @@ jobs:
       # suitable Python (3.11+) pre-provisioned on PATH; setup-python does not
       # support every self-hosted platform (e.g. win-arm64), so it is best-effort.
       - name: Set up Python (best-effort)
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v7
         with:
           python-version: '3.11'
         continue-on-error: true
